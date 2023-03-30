@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include "server.h"
 
@@ -13,9 +14,15 @@ Server::Server(boost::asio::io_context& io_context) :
     tcp::socket socket(m_io_context);
     m_acceptor.accept(socket);
 
-    std::cout << "Connection established!" << std::endl;
+    std::cout << "Connection established! Reading data..." << std::endl;
 
-    std::string message = "Success!";
+    boost::asio::streambuf buf;
+    boost::asio::read_until(socket, buf, "\n");
+
+    std::string message = boost::asio::buffer_cast<const char*>(buf.data());
+    std::cout << "Recieved: " << message;
+    std::transform(message.begin(), message.end(), message.begin(), ::toupper);
+    std::cout << "Returning: " << message;
 
     boost::system::error_code ignored_error;
     boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
