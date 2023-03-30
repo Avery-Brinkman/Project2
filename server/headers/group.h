@@ -1,8 +1,7 @@
 #pragma once
 
-#include <boost/asio.hpp>
-#include <map>
 #include <string>
+#include <vector>
 
 namespace GROUP_NS {
   struct Message {
@@ -16,15 +15,26 @@ namespace GROUP_NS {
   public:
     Group() = default;
 
+    // Adds a user with a given userName to the group
     void addUser(const std::string_view userName);
 
+    // Removes a user with the given userName from the group
     void removeUser(const std::string_view userName);
 
+    // Posts a message to the group and returns the id for the new message.
     int postMessage(const std::string_view name, const std::string_view subject, const std::string_view content);
 
-    Message getMessage(const int message);
+    // Gets the Message with the given id
+    Message getMessage(const int messageId) const;
+
+    // Gets the list of users in the group
+    std::vector<std::string> getUsers() const;
 
   private:
-    std::map<std::string, boost::asio::ip::tcp::socket> m_users;
+    // List of users
+    std::vector<std::string> m_users;
+
+    // All messages sent
+    std::vector<Message> m_messages;
   };
 }
