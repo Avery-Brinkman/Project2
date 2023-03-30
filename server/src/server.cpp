@@ -6,7 +6,7 @@ using boost::asio::ip::tcp;
 using namespace SERVER_NS;
 
 Server::Server(boost::asio::io_context& io_context) :
-  m_io_context(io_context), m_acceptor(tcp::acceptor(m_io_context, tcp::endpoint(tcp::v4(), PORT))) {
+  m_io_context(io_context), m_acceptor(tcp::acceptor(m_io_context, tcp::endpoint(tcp::v4(), PORT))), m_groups(std::vector<GROUP_NS::Group>(6)) {
   std::cout << "Server running on port " << PORT << std::endl;
 
   while (true) {

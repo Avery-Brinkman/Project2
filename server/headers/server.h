@@ -1,7 +1,9 @@
 #pragma once
 
+#include <map>
+#include <vector>
 #include <boost/asio.hpp>
-//#include "group.h"
+#include "group.h"
 
 namespace SERVER_NS {
   static const unsigned int PORT = 5000;
@@ -11,7 +13,9 @@ namespace SERVER_NS {
     Server(boost::asio::io_context& io_context);
 
   private:
-    //GROUP_NS::Group m_publicGroup;
+    std::vector<GROUP_NS::Group> m_groups;
+
+    std::map<std::string, boost::asio::ip::tcp::socket> m_users;
 
     boost::asio::io_context& m_io_context;
 
