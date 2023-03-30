@@ -4,11 +4,12 @@ project("Project2_Server")
 
 set(SRC_FILES
   src/main.cpp
-  src/server.cpp
+  src/group.cpp
 )
 
 set(INCLUDE_FILES
   headers/server.h
+  headers/group.h
 )
 
 find_package(Boost 1.80.0 REQUIRED)
