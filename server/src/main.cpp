@@ -1,13 +1,11 @@
 #include <boost/asio.hpp>
+
 #include "server.h"
 
-#include "group.h"
-
-using namespace SERVER_NS;
-using namespace GROUP_NS;
-
 int main() {
-  Group pub;
+  boost::asio::io_context ctx;
+  SERVER_NS::Server test(ctx);
+  ctx.run();
 
   return 1;
 }
