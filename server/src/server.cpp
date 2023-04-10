@@ -1,34 +1,107 @@
-#include <algorithm>
-#include <iostream>
 #include <thread>
-#include <WinSock2.h>
 
 #include "server.h"
 
-//using boost::asio::ip::tcp;
 using namespace SERVER_NS;
-//
-//Server::Server(boost::asio::io_context& io_context) :
-//  m_io_context(io_context), m_acceptor(tcp::acceptor(m_io_context, tcp::endpoint(tcp::v4(), PORT))), m_groups(std::vector<GROUP_NS::Group>(6)) {
-//  std::cout << "Server running on port " << PORT << std::endl;
-//
-//  while (true) {
-//    std::cout << "Waiting for connections..." << std::endl;
-//    tcp::socket socket(m_io_context);
-//    m_acceptor.accept(socket);
-//
-//    std::cout << "Connection established! Reading data..." << std::endl;
-//
-//    boost::asio::streambuf buf;
-//    boost::asio::read_until(socket, buf, "\n");
-//
-//    std::string message = boost::asio::buffer_cast<const char*>(buf.data());
-//    std::cout << "Recieved: " << message;
-//
-//    std::transform(message.begin(), message.end(), message.begin(), ::toupper);
-//    std::cout << "Returning: " << message;
-//
-//    boost::system::error_code ignored_error;
-//    boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
-//  }
-//}
+
+Server::Server() {
+  WSADATA wsaData;
+
+  // Initialize Winsock
+  int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
+  if (res != 0) {
+    throw std::exception("WSAStartup failed");
+  }
+
+  addrinfo hints;
+  addrinfo* result;
+  ZeroMemory(&hints, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_flags = AI_PASSIVE;
+
+  // Resolve the server address and port
+  res = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
+  if (res != 0) {
+    WSACleanup();
+    throw std::exception("getaddrinfo failed");
+  }
+
+  // Create a SOCKET for the server to listen for client connections.
+  m_listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+  if (m_listenSocket == INVALID_SOCKET) {
+    freeaddrinfo(result);
+    WSACleanup();
+    throw std::exception("socket failed");
+  }
+
+  // Setup the TCP listening socket
+  res = bind(m_listenSocket, result->ai_addr, (int)result->ai_addrlen);
+  if (res == SOCKET_ERROR) {
+    freeaddrinfo(result);
+    closesocket(m_listenSocket);
+    WSACleanup();
+    throw std::exception("bind failed");
+  }
+  freeaddrinfo(result);
+
+  res = listen(m_listenSocket, SOMAXCONN);
+  if (res == SOCKET_ERROR) {
+    closesocket(m_listenSocket);
+    WSACleanup();
+    throw std::exception("listen failed");
+  }
+
+  auto ClientSocket = INVALID_SOCKET;
+  // Accept a client socket
+  ClientSocket = accept(m_listenSocket, nullptr, nullptr);
+  if (ClientSocket == INVALID_SOCKET) {
+    closesocket(m_listenSocket);
+    WSACleanup();
+    throw std::exception("accept failed");
+  }
+
+  // No longer need server socket
+  closesocket(m_listenSocket);
+
+  char recvbuf[DEFAULT_BUFLEN];
+  int recvbuflen = DEFAULT_BUFLEN;
+  // Receive until the peer shuts down the connection
+  do {
+    int sendRes;
+
+    res = recv(ClientSocket, recvbuf, recvbuflen, 0);
+    if (res > 0) {
+      printf("Bytes received: %d\n", res);
+
+      // Echo the buffer back to the sender
+      sendRes = send(ClientSocket, recvbuf, res, 0);
+      if (sendRes == SOCKET_ERROR) {
+        closesocket(ClientSocket);
+        WSACleanup();
+        throw std::exception("send failed");
+      }
+      printf("Bytes sent: %d\n", sendRes);
+    } else if (res == 0)
+      printf("Connection closing...\n");
+    else {
+      closesocket(ClientSocket);
+      WSACleanup();
+      throw std::exception("recv failed");
+    }
+
+  } while (res > 0);
+
+  // shutdown the connection since we're done
+  res = shutdown(ClientSocket, SD_SEND);
+  if (res == SOCKET_ERROR) {
+    closesocket(ClientSocket);
+    WSACleanup();
+    throw std::exception("shutdown failed");
+  }
+
+  // cleanup
+  closesocket(ClientSocket);
+  WSACleanup();
+}

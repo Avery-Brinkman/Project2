@@ -13,8 +13,6 @@ set(INCLUDE_FILES
   headers/server.h
 )
 
-# find_package(Boost 1.80.0 REQUIRED)
-
 add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES} ${INCLUDE_FILES})
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE headers)
 
