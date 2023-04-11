@@ -20,5 +20,7 @@ private:
   std::vector<GROUP_NS::Group> m_groups;
 
   SOCKET m_listenSocket = INVALID_SOCKET;
+
+  std::map<std::string, SOCKET> m_userSockets;
 };
 } // namespace SERVER_NS

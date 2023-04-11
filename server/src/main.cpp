@@ -6,7 +6,11 @@
 #include <iostream>
 
 int main() {
-  auto s = SERVER_NS::Server::Server();
+  try {
+    auto s = SERVER_NS::Server::Server();
+  } catch (const std::exception& e) {
+    std::cout << e.what() << std::endl;
+  }
 
   return 0;
 }
