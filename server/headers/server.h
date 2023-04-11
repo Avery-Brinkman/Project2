@@ -4,6 +4,7 @@
 
 #include <WS2tcpip.h>
 #include <map>
+#include <thread>
 #include <vector>
 
 #include "group.h"
@@ -13,18 +14,21 @@ constexpr auto DEFAULT_BUFLEN = 512;
 namespace SERVER_NS {
 class Server {
 public:
-  explicit Server(const char* port = "5000");
+  void addUser(const SOCKET& userSocket);
+
+  void addUser(const std::string_view userName, const SOCKET& userSocket);
 
   void shutdown();
 
 private:
-  void clientHandler(const std::string_view userName, const SOCKET& userSocket) const;
+  void userHandler(std::stop_token stopToken, const std::string_view userName,
+                   const SOCKET& userSocket) const;
 
-  std::vector<GROUP_NS::Group> m_groups;
+  std::vector<GROUP_NS::Group> m_groups = std::vector<GROUP_NS::Group>(6);
 
-  SOCKET m_listenSocket = INVALID_SOCKET;
+  std::stop_source m_stopSource = std::stop_source();
 
   // needed?
-  std::map<std::string, SOCKET> m_userSockets;
+  std::map<std::string, std::jthread> m_users;
 };
 } // namespace SERVER_NS
