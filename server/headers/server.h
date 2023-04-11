@@ -9,18 +9,22 @@
 #include "group.h"
 
 constexpr auto DEFAULT_BUFLEN = 512;
-constexpr auto DEFAULT_PORT = "5000";
 
 namespace SERVER_NS {
 class Server {
 public:
-  Server();
+  explicit Server(const char* port = "5000");
+
+  void shutdown();
 
 private:
+  void clientHandler(const std::string_view userName, const SOCKET& userSocket) const;
+
   std::vector<GROUP_NS::Group> m_groups;
 
   SOCKET m_listenSocket = INVALID_SOCKET;
 
+  // needed?
   std::map<std::string, SOCKET> m_userSockets;
 };
 } // namespace SERVER_NS
