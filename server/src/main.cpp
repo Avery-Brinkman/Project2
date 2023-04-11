@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Create a SOCKET for the server to listen for client connections.
-  SOCKET listenSocket = INVALID_SOCKET;
+  auto listenSocket = INVALID_SOCKET;
   listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
   if (listenSocket == INVALID_SOCKET) {
     freeaddrinfo(result);
