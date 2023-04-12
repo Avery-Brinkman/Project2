@@ -32,8 +32,10 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket) 
     closesocket(userSocket);
     return;
   }
-  // Create a new thread and add it to our map
-  std::jthread(&Server::userHandler, this, m_stopSource.get_token(), userName, userSocket).detach();
+
+  // Create a new user, and hand it off to the thread function
+  std::jthread(&Server::userHandler, this, std::move(USER_NS::User(userName, userSocket, m_groups.size()))).detach();
+  // Track the new user
   m_users.emplace(userName.data());
   std::cout << "Added user: " << userName.data() << std::endl;
 
@@ -45,10 +47,8 @@ void Server::shutdown() {
   // For each thread, request a stop and remove it from the map
 }
 
-void Server::userHandler(std::stop_token stopToken, const std::string_view userName,
-  const SOCKET& userSocket) {
+void Server::userHandler(USER_NS::User user) {
   int res;
-  std::string name(userName.data(), userName.size());
 
   // Receive until the user shuts down the connection or a stop is requested
   do {
@@ -56,25 +56,26 @@ void Server::userHandler(std::stop_token stopToken, const std::string_view userN
 
     // Read data to buffer
     char recvbuf[DEFAULT_BUFLEN] = { '\0' };
-    res = recv(userSocket, recvbuf, DEFAULT_BUFLEN, 0);
+    res = recv(user.socket, recvbuf, DEFAULT_BUFLEN, 0);
 
     // Close on error or if connection closed
     if (res <= 0) {
       if (res < 0)
-        std::cout << "Could not read data from " << name << ", closing connection." << std::endl;
+        std::cout << "Could not read data from " << user.name << ", closing connection." << std::endl;
       else
-        std::cout << "Connection to " << name << " closing..." << std::endl;
+        std::cout << "Connection to " << user.name << " closing..." << std::endl;
     }
     // Main logic
     else {
 
-      parser(name, userSocket, recvbuf);
+      parser(user.name, user.socket, recvbuf);
     }
-  } while (res > 0 && !stopToken.stop_requested());
+    //} while (res > 0 && !stopToken.stop_requested());
+  } while (res > 0);
 
   // Close connection and remove from user map
-  closesocket(userSocket);
-  m_users.erase(name);
+  closesocket(user.socket);
+  m_users.erase(user.name);
   return;
 }
 

@@ -66,12 +66,9 @@ int main(int argc, char* argv[]) {
   // Always listen for new user
   while (true) {
     auto userSocket = INVALID_SOCKET;
-    SOCKADDR_IN client_info = { 0 };
-    int addrsize = sizeof(client_info);
     // Accept a client socket
-    userSocket = accept(listenSocket, (struct sockaddr*)&client_info, &addrsize);
-    char* ip = inet_ntoa(client_info.sin_addr);
-    std::cout << "Connection made with device at " << ip << std::endl;
+    userSocket = accept(listenSocket, nullptr, nullptr);
+    std::cout << "Connection made with new device." << std::endl;
     if (userSocket == INVALID_SOCKET) {
       closesocket(listenSocket);
       WSACleanup();
