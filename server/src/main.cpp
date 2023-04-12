@@ -9,6 +9,7 @@
 constexpr auto DEFAULT_PORT = "5000";
 
 int main(int argc, char* argv[]) {
+  std::cout << "Starting server!" << std::endl;
   WSADATA wsaData;
   SERVER_NS::Server server;
 
@@ -59,11 +60,18 @@ int main(int argc, char* argv[]) {
     throw std::exception("listen failed");
   }
 
+  std::cout << "Server running on port " << port << std::endl;
+  std::cout << "Waiting for connections..." << std::endl;
+
   // Always listen for new user
   while (true) {
     auto userSocket = INVALID_SOCKET;
+    SOCKADDR_IN client_info = { 0 };
+    int addrsize = sizeof(client_info);
     // Accept a client socket
-    userSocket = accept(listenSocket, nullptr, nullptr);
+    userSocket = accept(listenSocket, (struct sockaddr*)&client_info, &addrsize);
+    char* ip = inet_ntoa(client_info.sin_addr);
+    std::cout << "Connection made with device at " << ip << std::endl;
     if (userSocket == INVALID_SOCKET) {
       closesocket(listenSocket);
       WSACleanup();

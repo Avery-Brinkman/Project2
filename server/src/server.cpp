@@ -7,7 +7,7 @@ using namespace SERVER_NS;
 
 void Server::addUser(const SOCKET& userSocket) {
   // Read the userName into a buffer
-  char nameBuf[DEFAULT_BUFLEN] = {'\0'};
+  char nameBuf[DEFAULT_BUFLEN] = { '\0' };
   int res = recv(userSocket, nameBuf, DEFAULT_BUFLEN, 0);
   if (res <= 0) {
     std::cout << "Could not read from new user socket!" << std::endl;
@@ -21,6 +21,7 @@ void Server::addUser(const SOCKET& userSocket) {
 }
 
 void Server::addUser(const std::string_view userName, const SOCKET& userSocket) {
+  std::cout << "Attempting to add user: " << userName.data() << std::endl;
   // Ensure user doesn't already exist
   if (m_users.contains(userName.data())) {
     send(userSocket, "User already exists!", 21, 0);
@@ -30,6 +31,7 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket) 
   // Create a new thread and add it to our map
   std::jthread(&Server::userHandler, this, m_stopSource.get_token(), userName, userSocket).detach();
   m_users.emplace(userName.data());
+  std::cout << "Added user: " << userName.data() << std::endl;
 }
 
 void Server::shutdown() {
@@ -37,7 +39,7 @@ void Server::shutdown() {
 }
 
 void Server::userHandler(std::stop_token stopToken, const std::string_view userName,
-                         const SOCKET& userSocket) {
+  const SOCKET& userSocket) {
   int res;
   std::string name(userName.data(), userName.size());
 
@@ -46,7 +48,7 @@ void Server::userHandler(std::stop_token stopToken, const std::string_view userN
     int sendRes;
 
     // Read data to buffer
-    char recvbuf[DEFAULT_BUFLEN] = {'\0'};
+    char recvbuf[DEFAULT_BUFLEN] = { '\0' };
     res = recv(userSocket, recvbuf, DEFAULT_BUFLEN, 0);
 
     // Close on error or if connection closed
@@ -86,19 +88,26 @@ void Server::parser(const std::string_view userName, const SOCKET& userSocket, c
     closesocket(userSocket);
     m_users.erase(userName.data());
     return;
-  } else if (command == "%join") {
+  }
+  else if (command == "%join") {
     std::cout << "join" << std::endl;
-  } else if (command == "%exit") {
+  }
+  else if (command == "%exit") {
     std::cout << "exit" << std::endl;
-  } else if (command == "%usrs") {
+  }
+  else if (command == "%usrs") {
     std::cout << "usrs" << std::endl;
-  } else if (command == "%post") {
+  }
+  else if (command == "%post") {
     std::cout << "post" << std::endl;
-  } else if (command == "%mesg") {
+  }
+  else if (command == "%mesg") {
     std::cout << "mesg" << std::endl;
-  } else if (command == "%grps") {
+  }
+  else if (command == "%grps") {
     std::cout << "grps" << std::endl;
-  } else {
+  }
+  else {
     std::cout << "Invalid command" << std::endl;
   }
   std::cout << std::endl;
