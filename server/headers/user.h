@@ -23,13 +23,21 @@ namespace USER_NS {
 
     void leaveGroup(int groupId);
 
-    void notifyJoin(std::string_view userName, int groupId) const;
+    void notifyJoin(const std::string_view userName, int groupId) const;
 
-    void notifyLeave(std::string_view userName, int groupId) const;
+    void notifyLeave(const std::string_view userName, int groupId) const;
 
     void showGroupMembers(int groupId) const;
 
+    int postMessage(int groupId, const std::string_view subject, const std::string_view content) const;
+
+    void getMessage(int groupId, int messageId) const;
+
+    void notifyMessage(int groupId, int messageId) const;
+
     bool selfQuit() const { return m_quit; }
+
+    bool verifyGroup(int groupId) const;
 
     std::string name;
 

@@ -107,6 +107,7 @@ void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
   }
   else if (command == "%post") {
     std::cout << "post" << std::endl;
+    postMessage(user, groupId);
   }
   else if (command == "%mesg") {
     std::cout << "mesg" << std::endl;
@@ -166,4 +167,27 @@ void Server::listGroups(std::shared_ptr<USER_NS::User> user) const {
   returnMessage.back() = '\n';
 
   int res = send(user->socket, returnMessage.c_str(), returnMessage.length(), 0);
+}
+
+void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
+  int res;
+
+  // Read subject into buffer, and create a string_view for it
+  char subjBuf[DEFAULT_BUFLEN] = { '\0' };
+  res = recv(user->socket, subjBuf, DEFAULT_BUFLEN, 0);
+  std::string_view subject(subjBuf, res);
+
+  // Read content into buffer, and create a string_view for it
+  char contBuf[DEFAULT_BUFLEN] = { '\0' };
+  res = recv(user->socket, contBuf, DEFAULT_BUFLEN, 0);
+  std::string_view content(contBuf, res);
+
+  // Tell user to post the message and get the id for it
+  int messageId = user->postMessage(groupId, subject, content);
+  // Don't continue if the message couldn't be posted
+  if (messageId < 0) return;
+
+  // Notify the rest of the users
+  for (auto userName : m_groups[groupId]->getUsers())
+    m_users.at(userName)->notifyMessage(groupId, messageId);
 }

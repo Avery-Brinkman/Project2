@@ -17,7 +17,7 @@ void Group::removeUser(const std::string_view userName) {
 
 int Group::postMessage(const std::string_view name, const std::string_view subject, const std::string_view content) {
   int msgId = (int)m_messages.size();
-  Message newMessage = { msgId, name.data(), subject.data(), content.data() };
+  m_messages.emplace_back(msgId, name.data(), subject.data(), content.data());
   return msgId;
 }
 

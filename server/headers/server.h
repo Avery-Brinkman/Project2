@@ -42,6 +42,8 @@ namespace SERVER_NS {
 
     void listGroups(std::shared_ptr<USER_NS::User> user) const;
 
+    void postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
+
     // Used to create stop_tokens, which allow for cooperative cancellation
     //std::stop_source m_stopSource = std::stop_source();
 

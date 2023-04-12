@@ -45,32 +45,30 @@ void User::joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group) {
 }
 
 void User::leaveGroup(int groupId) {
+  // Can't leave unless already joined
+  if (!verifyGroup(groupId)) return;
+
   // Tell group to remove user
   m_groups.at(groupId)->removeUser(name);
   // Remove group from list of joined groups
   m_groups.erase(groupId);
 }
 
-void User::notifyJoin(std::string_view userName, int groupId) const {
+void User::notifyJoin(const std::string_view userName, int groupId) const {
   std::string notification = "User " + std::string(userName) + " has joined group " + std::to_string(groupId) + "\n";
   int res = send(socket, notification.c_str(), notification.length(), 0);
 }
 
-void User::notifyLeave(std::string_view userName, int groupId) const {
+void User::notifyLeave(const std::string_view userName, int groupId) const {
   std::string notification = "User " + std::string(userName) + " has left group " + std::to_string(groupId) + "\n";
   int res = send(socket, notification.c_str(), notification.length(), 0);
 }
 
 void User::showGroupMembers(int groupId) const {
-  int res;
-  std::string returnMessage = "Group " + std::to_string(groupId) + " members:";
-
   // Make sure user belongs to the group before showing group members
-  if (!m_groups.contains(groupId)) {
-    returnMessage = "You must join group " + std::to_string(groupId) + " before seeing its members!\n";
-    res = send(socket, returnMessage.c_str(), returnMessage.length(), 0);
-    return;
-  }
+  if (!verifyGroup(groupId)) return;
+
+  std::string returnMessage = "Group " + std::to_string(groupId) + " members:";
 
   // Get names of group members
   auto groupNames = m_groups.at(groupId)->getUsers();
@@ -81,5 +79,38 @@ void User::showGroupMembers(int groupId) const {
   returnMessage.back() = '\n';
 
   // Send list of group members
-  res = send(socket, returnMessage.c_str(), returnMessage.length(), 0);
+  int res = send(socket, returnMessage.c_str(), returnMessage.length(), 0);
+}
+
+int User::postMessage(int groupId, const std::string_view subject, const std::string_view content) const {
+  // Make sure user belongs to the group before showing group members
+  if (!verifyGroup(groupId)) return -1;
+
+  // Return the id of the new message
+  return m_groups.at(groupId)->postMessage(name, subject, content);
+}
+
+void User::getMessage(int groupId, int messageId) const {
+  // Make sure user belongs to the group before showing group members
+  if (!verifyGroup(groupId)) return;
+
+  auto message = m_groups.at(groupId)->getMessage(messageId);
+  int res = send(socket, message.message.c_str(), message.message.length(), 0);
+}
+
+void User::notifyMessage(int groupId, int messageId) const {
+  auto message = m_groups.at(groupId)->getMessage(messageId);
+
+  std::string notification = std::to_string(groupId) + '\n' + std::to_string(message.id) + '\n' + message.userName + '\n' + message.subject + '\n';
+  int res = send(socket, notification.c_str(), notification.length(), 0);
+}
+
+bool User::verifyGroup(int groupId) const {
+  if (!m_groups.contains(groupId)) {
+    std::string returnMessage = "You must join group " + std::to_string(groupId) + " before performing that action!\n";
+    send(socket, returnMessage.c_str(), returnMessage.length(), 0);
+    return false;
+  }
+  return true;
+  return false;
 }
