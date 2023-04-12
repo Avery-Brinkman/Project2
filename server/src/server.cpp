@@ -16,7 +16,11 @@ void Server::addUser(const SOCKET& userSocket) {
   }
 
   // Read buffer into the string_view (exclude newline character), and pass on for thread creation
-  nameBuf[res] = '\0';
+  //
+  // Temporary fix until better end of command is decided
+  //
+  if (nameBuf[res - 1] == '\n')
+    nameBuf[res - 1] = '\0';
   addUser(nameBuf, userSocket);
 }
 
@@ -32,8 +36,8 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket) 
   std::jthread(&Server::userHandler, this, m_stopSource.get_token(), userName, userSocket).detach();
   m_users.emplace(userName.data());
   std::cout << "Added user: " << userName.data() << std::endl;
-  
-// send a list of users to group each time a new user joins 
+
+  // send a list of users to group each time a new user joins 
 
 }
 
