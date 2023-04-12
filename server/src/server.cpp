@@ -34,9 +34,10 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket) 
   }
 
   // Create a new user, and hand it off to the thread function
-  std::jthread(&Server::userHandler, this, std::move(USER_NS::User(userName, userSocket, m_groups.size()))).detach();
+  auto newUser = std::make_shared<USER_NS::User>(userName, userSocket, NUM_GROUPS);
+  std::jthread(&Server::userHandler, this, newUser).detach();
   // Track the new user
-  m_users.emplace(userName.data());
+  m_users[userName.data()] = newUser;
   std::cout << "Added user: " << userName.data() << std::endl;
 
   // send a list of users to group each time a new user joins 
@@ -47,7 +48,7 @@ void Server::shutdown() {
   // For each thread, request a stop and remove it from the map
 }
 
-void Server::userHandler(USER_NS::User user) {
+void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
   int res;
 
   // Receive until the user shuts down the connection or a stop is requested
@@ -56,30 +57,30 @@ void Server::userHandler(USER_NS::User user) {
 
     // Read data to buffer
     char recvbuf[DEFAULT_BUFLEN] = { '\0' };
-    res = recv(user.socket, recvbuf, DEFAULT_BUFLEN, 0);
+    res = recv(user->socket, recvbuf, DEFAULT_BUFLEN, 0);
 
     // Close on error or if connection closed
     if (res <= 0) {
       if (res < 0)
-        std::cout << "Could not read data from " << user.name << ", closing connection." << std::endl;
+        std::cout << "Could not read data from " << user->name << ", closing connection." << std::endl;
       else
-        std::cout << "Connection to " << user.name << " closing..." << std::endl;
+        std::cout << "Connection to " << user->name << " closing..." << std::endl;
     }
     // Main logic
     else {
 
-      parser(user.name, user.socket, recvbuf);
+      parser(user, recvbuf);
     }
     //} while (res > 0 && !stopToken.stop_requested());
   } while (res > 0);
 
   // Close connection and remove from user map
-  closesocket(user.socket);
-  m_users.erase(user.name);
+  closesocket(user->socket);
+  m_users.erase(user->name);
   return;
 }
 
-void Server::parser(const std::string_view userName, const SOCKET& userSocket, char* buffer) {
+void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
   if (strlen(buffer) < 6) {
     return;
   }
@@ -88,17 +89,17 @@ void Server::parser(const std::string_view userName, const SOCKET& userSocket, c
   }
   std::string command(buffer, 5);
   int groupId = atoi(buffer + 6);
-  std::cout << "   USER: " << userName.data() << std::endl;
+  std::cout << "   USER: " << user->name << std::endl;
   std::cout << "  GROUP: " << groupId << std::endl;
   std::cout << "COMMAND: ";
   if (command == "%quit") {
     std::cout << "    quit" << std::endl;
-    closesocket(userSocket);
-    m_users.erase(userName.data());
+    quit(user);
     return;
   }
   else if (command == "%join") {
     std::cout << "join" << std::endl;
+    addToGroup(user, groupId);
   }
   else if (command == "%exit") {
     std::cout << "exit" << std::endl;
@@ -121,7 +122,35 @@ void Server::parser(const std::string_view userName, const SOCKET& userSocket, c
   std::cout << std::endl;
 
   std::stringstream ss;
-  ss << userName << " " << command << " " << groupId << '\n';
+  ss << user->name << " " << command << " " << groupId << '\n';
   std::string ret = ss.str();
-  send(userSocket, ret.c_str(), (int)ret.size(), 0);
+  send(user->socket, ret.c_str(), (int)ret.size(), 0);
+}
+
+void Server::quit(std::shared_ptr<USER_NS::User> user) {
+  // Get the ids of groups that the user had joined
+  auto joinedGroups = user->joinedGroups();
+
+  // Close connection
+  user->quit();
+
+  // Stop tracking name
+  m_users.erase(user->name);
+  
+  // Notify other users that the user has left the group
+  for (auto groupId : joinedGroups) {
+    for (auto otherUserName : m_groups[groupId]->getUsers())
+      std::cout << "Notify leave" << std::endl;
+  }
+}
+
+void Server::addToGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
+  // Get users currently in the group to notify them later
+  auto existingUsers = m_groups[groupId]->getUsers();
+  // Tell user to join the group
+  user->joinGroup(groupId, m_groups[groupId]);
+  // Notify other users
+  for (auto userName : existingUsers) {
+    m_users.at(userName)->notifyJoin(user->name, groupId);
+  }
 }

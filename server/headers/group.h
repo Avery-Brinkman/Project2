@@ -32,9 +32,9 @@ namespace GROUP_NS {
 
   private:
     // List of users
-    std::vector<std::string> m_users;
+    std::vector<std::string> m_users = {};
 
     // All messages sent
-    std::vector<Message> m_messages;
+    std::vector<Message> m_messages = {};
   };
 }

@@ -3,14 +3,15 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <WS2tcpip.h>
+#include <map>
 #include <thread>
-#include <unordered_set>
 #include <vector>
 
 #include "group.h"
 #include "user.h"
 
 constexpr auto DEFAULT_BUFLEN = 512;
+constexpr auto NUM_GROUPS = 6;
 
 namespace SERVER_NS {
   class Server {
@@ -26,19 +27,23 @@ namespace SERVER_NS {
 
   private:
     // Threaded function that handles the client connection
-    void userHandler(USER_NS::User user);
+    void userHandler(std::shared_ptr<USER_NS::User> user);
     //void userHandler(std::stop_token stopToken, USER_NS::User& user);
 
-    void parser(const std::string_view userName, const SOCKET& userSocket, char* buffer);
+    void parser(std::shared_ptr<USER_NS::User> user, char* buffer);
 
-    // The list of groups that run on the server. Indexed by ID, with 0 being the public (default)
-    // group
-    std::vector<GROUP_NS::Group> m_groups = std::vector<GROUP_NS::Group>(6);
+    void quit(std::shared_ptr<USER_NS::User> user);
+
+    void addToGroup(std::shared_ptr<USER_NS::User> user, int groupId);
 
     // Used to create stop_tokens, which allow for cooperative cancellation
-    std::stop_source m_stopSource = std::stop_source();
+    //std::stop_source m_stopSource = std::stop_source();
 
-    // Used to keep track of users
-    std::unordered_set<std::string> m_users;
+    // The list of groups that run on the server. Indexed by Id, with 0 being the public (default)
+    // group
+    std::vector<std::shared_ptr<GROUP_NS::Group>> m_groups = std::vector<std::shared_ptr<GROUP_NS::Group>>(NUM_GROUPS, std::make_shared<GROUP_NS::Group>());
+
+    // Used to keep track of user objects by name
+    std::map<std::string, std::shared_ptr<USER_NS::User>> m_users;
   };
 } // namespace SERVER_NS
