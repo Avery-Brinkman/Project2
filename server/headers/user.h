@@ -21,7 +21,11 @@ namespace USER_NS {
 
     void joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group);
 
+    void leaveGroup(int groupId);
+
     void notifyJoin(std::string_view userName, int groupId) const;
+
+    void notifyLeave(std::string_view userName, int groupId) const;
 
     std::string name;
 

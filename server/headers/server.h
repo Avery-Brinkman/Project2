@@ -36,6 +36,8 @@ namespace SERVER_NS {
 
     void addToGroup(std::shared_ptr<USER_NS::User> user, int groupId);
 
+    void removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId);
+
     // Used to create stop_tokens, which allow for cooperative cancellation
     //std::stop_source m_stopSource = std::stop_source();
 

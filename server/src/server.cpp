@@ -103,6 +103,7 @@ void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
   }
   else if (command == "%exit") {
     std::cout << "exit" << std::endl;
+    removeFromGroup(user, groupId);
   }
   else if (command == "%usrs") {
     std::cout << "usrs" << std::endl;
@@ -128,29 +129,34 @@ void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
 }
 
 void Server::quit(std::shared_ptr<USER_NS::User> user) {
-  // Get the ids of groups that the user had joined
-  auto joinedGroups = user->joinedGroups();
+  // Remove the user from each group that they joined
+  for (auto groupId : user->joinedGroups())
+    removeFromGroup(user, groupId);
 
   // Close connection
   user->quit();
 
   // Stop tracking name
   m_users.erase(user->name);
-  
-  // Notify other users that the user has left the group
-  for (auto groupId : joinedGroups) {
-    for (auto otherUserName : m_groups[groupId]->getUsers())
-      std::cout << "Notify leave" << std::endl;
-  }
 }
 
 void Server::addToGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
   // Get users currently in the group to notify them later
   auto existingUsers = m_groups[groupId]->getUsers();
+
   // Tell user to join the group
   user->joinGroup(groupId, m_groups[groupId]);
+
   // Notify other users
-  for (auto userName : existingUsers) {
+  for (auto userName : existingUsers)
     m_users.at(userName)->notifyJoin(user->name, groupId);
-  }
+}
+
+void Server::removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
+  // Tell user to leave group
+  user->leaveGroup(groupId);
+
+  // Notify other users
+  for (auto userName : m_groups[groupId]->getUsers())
+    m_users.at(userName)->notifyLeave(user->name, groupId);
 }

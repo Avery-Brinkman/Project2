@@ -8,9 +8,11 @@ User::User(const std::string_view userName, const SOCKET& userSocket, const int 
 }
 
 void User::quit() {
+  // Extra cleanup if necessary
   while (!m_groups.empty())
-    m_groups.begin()->second->removeUser(name);
+    leaveGroup(m_groups.begin()->first);
 
+  // Close connection
   closesocket(socket);
 }
 
@@ -32,14 +34,26 @@ void User::joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group) {
   std::string returnMessage = "Group " + std::to_string(groupId) + " joined! Members:";
   if (existingUsers.empty()) returnMessage.append(" None ");
   else
-    for (auto user : existingUsers) {
+    for (auto user : existingUsers)
       returnMessage.append(" " + user + ",");
-    }
   returnMessage.back() = '\n';
   int res = send(socket, returnMessage.c_str(), returnMessage.length(), 0);
+  // NEED TO SHOW LAST 2 MESSAGES AS WELL
 }
 
-void USER_NS::User::notifyJoin(std::string_view userName, int groupId) const {
+void User::leaveGroup(int groupId) {
+  // Tell group to remove user
+  m_groups.at(groupId)->removeUser(name);
+  // Remove group from list of joined groups
+  m_groups.erase(groupId);
+}
+
+void User::notifyJoin(std::string_view userName, int groupId) const {
   std::string notification = "User " + std::string(userName) + " has joined group " + std::to_string(groupId) + "\n";
+  int res = send(socket, notification.c_str(), notification.length(), 0);
+}
+
+void User::notifyLeave(std::string_view userName, int groupId) const {
+  std::string notification = "User " + std::string(userName) + " has left group " + std::to_string(groupId) + "\n";
   int res = send(socket, notification.c_str(), notification.length(), 0);
 }
