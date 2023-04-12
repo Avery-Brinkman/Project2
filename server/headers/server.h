@@ -11,11 +11,13 @@
 #include "user.h"
 
 constexpr auto DEFAULT_BUFLEN = 512;
-constexpr auto NUM_GROUPS = 6;
+constexpr auto NUM_GROUPS = 5;
 
 namespace SERVER_NS {
   class Server {
   public:
+    Server(int privateGroupCount = NUM_GROUPS);
+
     // Creates a new user given a socket for new client connection
     void addUser(const SOCKET& userSocket);
 
@@ -38,12 +40,14 @@ namespace SERVER_NS {
 
     void removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId);
 
+    void listGroups(std::shared_ptr<USER_NS::User> user) const;
+
     // Used to create stop_tokens, which allow for cooperative cancellation
     //std::stop_source m_stopSource = std::stop_source();
 
     // The list of groups that run on the server. Indexed by Id, with 0 being the public (default)
     // group
-    std::vector<std::shared_ptr<GROUP_NS::Group>> m_groups = std::vector<std::shared_ptr<GROUP_NS::Group>>(NUM_GROUPS, std::make_shared<GROUP_NS::Group>());
+    std::vector<std::shared_ptr<GROUP_NS::Group>> m_groups;
 
     // Used to keep track of user objects by name
     std::map<std::string, std::shared_ptr<USER_NS::User>> m_users;

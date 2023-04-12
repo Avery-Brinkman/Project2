@@ -5,6 +5,11 @@
 
 using namespace SERVER_NS;
 
+Server::Server(int privateGroupCount) {
+  for (int groupId = 0; groupId <= privateGroupCount; groupId++)
+    m_groups.push_back(std::make_shared<GROUP_NS::Group>());
+}
+
 void Server::addUser(const SOCKET& userSocket) {
   // Read the userName into a buffer
   char nameBuf[DEFAULT_BUFLEN] = { '\0' };
@@ -28,20 +33,17 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket) 
   std::cout << "Attempting to add user: " << userName.data() << std::endl;
   // Ensure user doesn't already exist
   if (m_users.contains(userName.data())) {
-    send(userSocket, "User already exists!", 21, 0);
+    send(userSocket, "User already exists!\n", 21, 0);
     closesocket(userSocket);
     return;
   }
 
   // Create a new user, and hand it off to the thread function
-  auto newUser = std::make_shared<USER_NS::User>(userName, userSocket, NUM_GROUPS);
+  auto newUser = std::make_shared<USER_NS::User>(userName, userSocket);
   std::jthread(&Server::userHandler, this, newUser).detach();
   // Track the new user
   m_users[userName.data()] = newUser;
   std::cout << "Added user: " << userName.data() << std::endl;
-
-  // send a list of users to group each time a new user joins 
-
 }
 
 void Server::shutdown() {
@@ -53,15 +55,13 @@ void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
 
   // Receive until the user shuts down the connection or a stop is requested
   do {
-    int sendRes;
-
     // Read data to buffer
     char recvbuf[DEFAULT_BUFLEN] = { '\0' };
     res = recv(user->socket, recvbuf, DEFAULT_BUFLEN, 0);
 
     // Close on error or if connection closed
     if (res <= 0) {
-      if (res < 0)
+      if (res < 0 && !user->selfQuit())
         std::cout << "Could not read data from " << user->name << ", closing connection." << std::endl;
       else
         std::cout << "Connection to " << user->name << " closing..." << std::endl;
@@ -81,21 +81,17 @@ void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
 }
 
 void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
-  if (strlen(buffer) < 6) {
-    return;
-  }
-  if (buffer[0] != '%') {
-    return;
-  }
+  if (strlen(buffer) < 6) return;
+  if (buffer[0] != '%') return;
+
   std::string command(buffer, 5);
   int groupId = atoi(buffer + 6);
   std::cout << "   USER: " << user->name << std::endl;
   std::cout << "  GROUP: " << groupId << std::endl;
   std::cout << "COMMAND: ";
   if (command == "%quit") {
-    std::cout << "    quit" << std::endl;
+    std::cout << "quit" << std::endl;
     quit(user);
-    return;
   }
   else if (command == "%join") {
     std::cout << "join" << std::endl;
@@ -107,6 +103,7 @@ void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
   }
   else if (command == "%usrs") {
     std::cout << "usrs" << std::endl;
+    user->showGroupMembers(groupId);
   }
   else if (command == "%post") {
     std::cout << "post" << std::endl;
@@ -116,16 +113,12 @@ void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
   }
   else if (command == "%grps") {
     std::cout << "grps" << std::endl;
+    listGroups(user);
   }
   else {
     std::cout << "Invalid command" << std::endl;
   }
   std::cout << std::endl;
-
-  std::stringstream ss;
-  ss << user->name << " " << command << " " << groupId << '\n';
-  std::string ret = ss.str();
-  send(user->socket, ret.c_str(), (int)ret.size(), 0);
 }
 
 void Server::quit(std::shared_ptr<USER_NS::User> user) {
@@ -159,4 +152,18 @@ void Server::removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
   // Notify other users
   for (auto userName : m_groups[groupId]->getUsers())
     m_users.at(userName)->notifyLeave(user->name, groupId);
+}
+
+void Server::listGroups(std::shared_ptr<USER_NS::User> user) const {
+  std::string returnMessage;
+  // Add each group id and member count to out message
+  for (int groupId = 0; groupId < m_groups.size(); groupId++)
+    returnMessage.append(std::string("Group " + std::to_string(groupId) + ": " + std::to_string(m_groups[groupId]->getUsers().size()) + " members, "));
+
+  // Remove trailing space
+  returnMessage.pop_back();
+  // Replace trailing comma with \n
+  returnMessage.back() = '\n';
+
+  int res = send(user->socket, returnMessage.c_str(), returnMessage.length(), 0);
 }

@@ -13,7 +13,7 @@
 namespace USER_NS {
   class User {
   public:
-    User(const std::string_view userName, const SOCKET& userSocket, const int groupCount);
+    User(const std::string_view userName, const SOCKET& userSocket);
 
     void quit();
 
@@ -27,11 +27,17 @@ namespace USER_NS {
 
     void notifyLeave(std::string_view userName, int groupId) const;
 
+    void showGroupMembers(int groupId) const;
+
+    bool selfQuit() const { return m_quit; }
+
     std::string name;
 
     SOCKET socket;
 
   private:
     std::map<int, std::shared_ptr<GROUP_NS::Group>> m_groups;
+
+    bool m_quit = false;
   };
 };
