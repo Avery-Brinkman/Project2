@@ -3,8 +3,8 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <WS2tcpip.h>
-#include <map>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
 #include "group.h"
@@ -28,6 +28,8 @@ private:
   void userHandler(std::stop_token stopToken, const std::string_view userName,
                    const SOCKET& userSocket);
 
+  void parser(const std::string_view userName, const SOCKET& userSocket, char* buffer);
+
   // The list of groups that run on the server. Indexed by ID, with 0 being the public (default)
   // group
   std::vector<GROUP_NS::Group> m_groups = std::vector<GROUP_NS::Group>(6);
@@ -35,7 +37,7 @@ private:
   // Used to create stop_tokens, which allow for cooperative cancellation
   std::stop_source m_stopSource = std::stop_source();
 
-  // Used to keep track of running threads
-  std::map<std::string, std::jthread> m_users;
+  // Used to keep track of users
+  std::unordered_set<std::string> m_users;
 };
 } // namespace SERVER_NS
