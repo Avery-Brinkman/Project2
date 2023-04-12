@@ -40,11 +40,17 @@ namespace SERVER_NS {
 
     void removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId);
 
+    void showGroupMembers(std::shared_ptr<USER_NS::User> user, int groupId) const;
+
     void listGroups(std::shared_ptr<USER_NS::User> user) const;
 
     void postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
 
     void getMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
+
+    void invalidCommand(std::shared_ptr<USER_NS::User> user, const std::string_view badCommand) const;
+
+    void logCommand(const std::string_view userName, const std::string_view command, int groupId = 0) const;
 
     // Used to create stop_tokens, which allow for cooperative cancellation
     //std::stop_source m_stopSource = std::stop_source();

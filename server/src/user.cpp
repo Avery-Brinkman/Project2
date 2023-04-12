@@ -119,3 +119,9 @@ bool User::verifyGroup(int groupId) const {
   }
   return true;
 }
+
+void User::invalidCommand(const std::string_view badCommand) const {
+  std::string notification = "Invalid command sent: " + std::string(badCommand);
+  if (notification.back() != '\n') notification.append("\n");
+  int res = send(socket, notification.c_str(), notification.length(), 0);
+}

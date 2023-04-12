@@ -39,6 +39,8 @@ namespace USER_NS {
 
     bool verifyGroup(int groupId) const;
 
+    void invalidCommand(const std::string_view badCommand) const;
+
     std::string name;
 
     SOCKET socket;
