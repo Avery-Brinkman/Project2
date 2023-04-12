@@ -6,11 +6,13 @@ set(SRC_FILES
   src/main.cpp
   src/group.cpp
   src/server.cpp
+  src/user.cpp
 )
 
 set(INCLUDE_FILES
   headers/group.h
   headers/server.h
+  headers/user.h
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES} ${INCLUDE_FILES})
