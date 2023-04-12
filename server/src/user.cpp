@@ -94,8 +94,14 @@ void User::getMessage(int groupId, int messageId) const {
   // Make sure user belongs to the group before showing group members
   if (!verifyGroup(groupId)) return;
 
+  int res;
   auto message = m_groups.at(groupId)->getMessage(messageId);
-  int res = send(socket, message.message.c_str(), message.message.length(), 0);
+  if (message.id == -1) {
+    std::string returnMessage = "Group " + std::to_string(groupId) + " does not contain message " + std::to_string(messageId) + "!\n";
+    send(socket, returnMessage.c_str(), returnMessage.length(), 0);
+    return;
+  }
+  res = send(socket, message.message.c_str(), message.message.length(), 0);
 }
 
 void User::notifyMessage(int groupId, int messageId) const {
@@ -112,5 +118,4 @@ bool User::verifyGroup(int groupId) const {
     return false;
   }
   return true;
-  return false;
 }

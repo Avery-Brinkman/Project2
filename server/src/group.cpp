@@ -22,6 +22,8 @@ int Group::postMessage(const std::string_view name, const std::string_view subje
 }
 
 Message Group::getMessage(const int messageId) const {
+  if (messageId < 0 || messageId >= m_messages.size()) return {};
+
   return m_messages.at(messageId);
 }
 

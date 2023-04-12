@@ -5,7 +5,7 @@
 
 namespace GROUP_NS {
   struct Message {
-    int id;
+    int id = -1;
     std::string userName;
     std::string subject;
     std::string message;

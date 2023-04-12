@@ -111,6 +111,7 @@ void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
   }
   else if (command == "%mesg") {
     std::cout << "mesg" << std::endl;
+    getMessage(user, groupId);
   }
   else if (command == "%grps") {
     std::cout << "grps" << std::endl;
@@ -190,4 +191,11 @@ void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const
   // Notify the rest of the users
   for (auto userName : m_groups[groupId]->getUsers())
     m_users.at(userName)->notifyMessage(groupId, messageId);
+}
+
+void Server::getMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
+  char recvbuf[DEFAULT_BUFLEN] = { '\0' };
+  int res = recv(user->socket, recvbuf, DEFAULT_BUFLEN, 0);
+  int messageId = atoi(recvbuf);
+  user->getMessage(groupId, messageId);
 }
