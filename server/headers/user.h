@@ -11,43 +11,66 @@
 #include "group.h"
 
 namespace USER_NS {
-  class User {
-  public:
-    User(const std::string_view userName, const SOCKET& userSocket);
+class User {
+public:
+  // Creates a user with a given name and existing socket
+  User(const std::string_view userName, const SOCKET& userSocket);
 
-    void quit();
+  // Leaves any group they're still in and closes the socket
+  void quit();
 
-    std::vector<int> joinedGroups() const;
+  // Returns the ids of each group they've joined
+  std::vector<int> joinedGroups() const;
 
-    void joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group);
+  // Adds group to list of joined groups, shows group members, and last 2 messages
+  void joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group);
 
-    void leaveGroup(int groupId);
+  // Removes user from each joined group, stops tracking group, and sends success message
+  void leaveGroup(int groupId);
 
-    void notifyJoin(const std::string_view userName, int groupId) const;
+  // Creates a message showing a user has joined a group and sends it
+  void notifyJoin(const std::string_view userName, int groupId);
 
-    void notifyLeave(const std::string_view userName, int groupId) const;
+  // Creates a message showing a user has left a group and sends it
+  void notifyLeave(const std::string_view userName, int groupId);
 
-    void showGroupMembers(int groupId) const;
+  // Creates a message showing the list of group members and sends it
+  void showGroupMembers(int groupId);
 
-    int postMessage(int groupId, const std::string_view subject, const std::string_view content) const;
+  // Adds a message to a group, sending a success response and returning the message id
+  int postMessage(int groupId, const std::string_view subject, const std::string_view content);
 
-    void getMessage(int groupId, int messageId) const;
+  // Gets the message with a given id from a given group and returns the contents
+  void getMessage(int groupId, int messageId);
 
-    void notifyMessage(int groupId, int messageId) const;
+  // Creates a message showing a new message has been posted to a group and sends it
+  void notifyMessage(int groupId, int messageId);
 
-    bool selfQuit() const { return m_quit; }
+  // Creates a message showing the last messages sent (up to 2) and returns the number that was sent
+  int showLastMessages(int groupId);
 
-    bool verifyGroup(int groupId) const;
+  bool selfQuit() const { return m_quit; }
 
-    void invalidCommand(const std::string_view badCommand) const;
+  // Returns whether user is in a given group and sends a message if not
+  bool verifyGroup(int groupId);
 
-    std::string name;
+  // Notifies the user that a bad command was sent
+  void invalidCommand(const std::string_view badCommand);
 
-    SOCKET socket;
+  // Sends a message to the user
+  void sendMessage(const std::string_view message);
 
-  private:
-    std::map<int, std::shared_ptr<GROUP_NS::Group>> m_groups;
+  // Name of the user
+  std::string name;
 
-    bool m_quit = false;
-  };
+  // Socket user is connected with
+  SOCKET socket;
+
+private:
+  // Maps group id to group
+  std::map<int, std::shared_ptr<GROUP_NS::Group>> m_groups;
+
+  // Tracks if user closed its own socket (for when future socket uses by server fail)
+  bool m_quit = false;
 };
+}; // namespace USER_NS

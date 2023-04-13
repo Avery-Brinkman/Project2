@@ -29,6 +29,9 @@ public:
   // Gets the Message with the given id
   Message getMessage(const int messageId) const;
 
+  // Returns the last n messages
+  std::vector<Message> getLastMessages(int n) const;
+
   // Gets the list of users in the group
   std::vector<std::string> getUsers() const;
 
@@ -36,7 +39,7 @@ private:
   // List of users
   std::vector<std::string> m_users = {};
 
-  // All messages sent
+  // All messages sent indexed by id
   std::vector<Message> m_messages = {};
 };
 } // namespace GROUP_NS
