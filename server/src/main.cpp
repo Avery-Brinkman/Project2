@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <WS2tcpip.h>
+#include <format>
 #include <iostream>
 #include <string>
 
@@ -16,7 +17,7 @@ int main(int argc, char* argv[]) {
   // Initialize Winsock
   int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
   if (res != 0)
-    throw std::exception("WSAStartup failed");
+    throw std::exception(std::format("WSAStartup failed with error: {}", res).c_str());
 
   addrinfo hints;
   addrinfo* result;
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
   res = getaddrinfo(nullptr, port, &hints, &result);
   if (res != 0) {
     WSACleanup();
-    throw std::exception("getaddrinfo failed");
+    throw std::exception(std::format("getaddrinfo failed with error: {}", res).c_str());
   }
 
   // Create a SOCKET for the server to listen for client connections.
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
   if (listenSocket == INVALID_SOCKET) {
     freeaddrinfo(result);
     WSACleanup();
-    throw std::exception("socket failed");
+    throw std::exception(std::format("socket failed with error: {}", WSAGetLastError()).c_str());
   }
 
   // Setup the TCP listening socket
@@ -49,7 +50,7 @@ int main(int argc, char* argv[]) {
     freeaddrinfo(result);
     closesocket(listenSocket);
     WSACleanup();
-    throw std::exception("bind failed");
+    throw std::exception(std::format("bind failed with error: {}", WSAGetLastError()).c_str());
   }
   freeaddrinfo(result);
 
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]) {
   if (res == SOCKET_ERROR) {
     closesocket(listenSocket);
     WSACleanup();
-    throw std::exception("listen failed");
+    throw std::exception(std::format("listen failed with error: {}", WSAGetLastError()).c_str());
   }
 
   std::cout << "Server running on port " << port << std::endl;
@@ -72,12 +73,10 @@ int main(int argc, char* argv[]) {
     if (userSocket == INVALID_SOCKET) {
       closesocket(listenSocket);
       WSACleanup();
-      throw std::exception("accept failed");
+      throw std::exception(std::format("accept failed with error: {}", WSAGetLastError()).c_str());
     }
-
     server.addUser(userSocket);
   }
-
   server.shutdown();
 
   WSACleanup();

@@ -1,5 +1,5 @@
+#include <format>
 #include <iostream>
-#include <sstream>
 
 #include "server.h"
 
@@ -12,7 +12,7 @@ Server::Server(int privateGroupCount) {
 
 void Server::addUser(const SOCKET& userSocket) {
   // Read the userName into a buffer
-  char nameBuf[DEFAULT_BUFLEN] = { '\0' };
+  char nameBuf[DEFAULT_BUFLEN] = {'\0'};
   int res = recv(userSocket, nameBuf, DEFAULT_BUFLEN, 0);
   if (res <= 0) {
     std::cout << "Could not read from new user socket!" << std::endl;
@@ -56,20 +56,20 @@ void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
   // Receive until the user shuts down the connection or a stop is requested
   do {
     // Read data to buffer
-    char recvbuf[DEFAULT_BUFLEN] = { '\0' };
+    char recvbuf[DEFAULT_BUFLEN] = {'\0'};
     res = recv(user->socket, recvbuf, DEFAULT_BUFLEN, 0);
 
     // Close on error or if connection closed
     if (res <= 0) {
       if (res < 0 && !user->selfQuit())
-        std::cout << "Could not read data from " << user->name << ", closing connection." << std::endl;
+        std::cout << "Could not read data from " << user->name << ", closing connection."
+                  << std::endl;
       else
         std::cout << "Connection to " << user->name << " closing..." << std::endl;
     }
     // Main logic
     else
       parser(user, recvbuf);
-    //} while (res > 0 && !stopToken.stop_requested());
   } while (res > 0);
 
   // Remove user
@@ -77,7 +77,7 @@ void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
   return;
 }
 
-void Server::parser(std::shared_ptr<USER_NS::User> user, char* buffer) {
+void Server::parser(std::shared_ptr<USER_NS::User> user, const char* buffer) {
   if (strlen(buffer) < 6 || buffer[0] != '%') {
     invalidCommand(user, buffer);
     return;
@@ -128,7 +128,7 @@ void Server::addToGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
   user->joinGroup(groupId, m_groups[groupId]);
 
   // Notify other users
-  for (auto userName : existingUsers)
+  for (auto const& userName : existingUsers)
     m_users.at(userName)->notifyJoin(user->name, groupId);
 }
 
@@ -139,7 +139,7 @@ void Server::removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
   user->leaveGroup(groupId);
 
   // Notify other users
-  for (auto userName : m_groups[groupId]->getUsers())
+  for (auto const& userName : m_groups[groupId]->getUsers())
     m_users.at(userName)->notifyLeave(user->name, groupId);
 }
 
@@ -154,56 +154,60 @@ void Server::listGroups(std::shared_ptr<USER_NS::User> user) const {
   std::string returnMessage;
   // Add each group id and member count to out message
   for (int groupId = 0; groupId < m_groups.size(); groupId++)
-    returnMessage.append(std::string("Group " + std::to_string(groupId) + ": " + std::to_string(m_groups[groupId]->getUsers().size()) + " members, "));
+    returnMessage.append(
+        std::format("Group {}: {} members", groupId, m_groups[groupId]->getUsers().size()));
 
   // Remove trailing space
   returnMessage.pop_back();
   // Replace trailing comma with \n
   returnMessage.back() = '\n';
 
-  int res = send(user->socket, returnMessage.c_str(), returnMessage.length(), 0);
+  int res = send(user->socket, returnMessage.c_str(), (int)returnMessage.length(), 0);
 }
 
 void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
-  int res;
-
   logCommand(user->name, "post", groupId);
 
+  int res;
+
   // Read subject into buffer, and create a string_view for it
-  char subjBuf[DEFAULT_BUFLEN] = { '\0' };
+  char subjBuf[DEFAULT_BUFLEN] = {'\0'};
   res = recv(user->socket, subjBuf, DEFAULT_BUFLEN, 0);
   std::string_view subject(subjBuf, res);
 
   // Read content into buffer, and create a string_view for it
-  char contBuf[DEFAULT_BUFLEN] = { '\0' };
+  char contBuf[DEFAULT_BUFLEN] = {'\0'};
   res = recv(user->socket, contBuf, DEFAULT_BUFLEN, 0);
   std::string_view content(contBuf, res);
 
   // Tell user to post the message and get the id for it
   int messageId = user->postMessage(groupId, subject, content);
   // Don't continue if the message couldn't be posted
-  if (messageId < 0) return;
+  if (messageId < 0)
+    return;
 
   // Notify the rest of the users
-  for (auto userName : m_groups[groupId]->getUsers())
+  for (auto const& userName : m_groups[groupId]->getUsers())
     m_users.at(userName)->notifyMessage(groupId, messageId);
 }
 
 void Server::getMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
   logCommand(user->name, "mesg", groupId);
 
-  char recvbuf[DEFAULT_BUFLEN] = { '\0' };
+  char recvbuf[DEFAULT_BUFLEN] = {'\0'};
   int res = recv(user->socket, recvbuf, DEFAULT_BUFLEN, 0);
   int messageId = atoi(recvbuf);
   user->getMessage(groupId, messageId);
 }
 
-void Server::invalidCommand(std::shared_ptr<USER_NS::User> user, const std::string_view badCommand) const {
+void Server::invalidCommand(std::shared_ptr<USER_NS::User> user,
+                            const std::string_view badCommand) const {
   logCommand(user->name, "INVALID", -1);
   user->invalidCommand(badCommand);
 }
 
-void Server::logCommand(const std::string_view userName, const std::string_view command, int groupId) const {
+void Server::logCommand(const std::string_view userName, const std::string_view command,
+                        int groupId) const {
   std::cout << "USERNAME: " << userName << std::endl;
   std::cout << "GROUP_ID: " << groupId << std::endl;
   std::cout << " COMMAND: " << command << std::endl;
