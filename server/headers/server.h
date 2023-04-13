@@ -4,6 +4,8 @@
 
 #include <WS2tcpip.h>
 #include <map>
+#include <queue>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -23,18 +25,24 @@ public:
   void addUser(const SOCKET& userSocket);
 
   // Starts a new thread to handle socket data, mapping it to the user it belongs to
-  void addUser(const std::string_view userName, const SOCKET& userSocket);
+  void addUser(const std::string_view userName, const SOCKET& userSocket,
+               std::queue<std::string>& commandQueue);
 
   // Shuts down the server and all client connections
   void shutdown();
 
 private:
+  // Reads characters from a socket up to and including \n, returning result
+  std::string readSocket(const SOCKET& userSocket);
+
+  void addToQueue(const SOCKET& userSocket, std::queue<std::string>& queue);
+
   // Threaded function that handles the client connection. This is the main logic that runs a user
   // connection
-  void userHandler(std::shared_ptr<USER_NS::User> user);
+  void userHandler(std::shared_ptr<USER_NS::User> user, std::queue<std::string> commandQueue);
 
   // Takes the user's input and, logs it, and calls the relevant function
-  void parser(std::shared_ptr<USER_NS::User> user, const char* buffer);
+  void parser(std::shared_ptr<USER_NS::User> user, const std::string_view command);
 
   // Removes the user from any joined group, tells user to close connection, and removes from list
   // of users
