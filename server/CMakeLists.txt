@@ -20,6 +20,4 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE headers)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE wsock32 ws2_32)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-endif()
+set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY CXX_STANDARD 20)
