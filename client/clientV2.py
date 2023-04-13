@@ -60,8 +60,15 @@ class Client:
                     exit()
 
                 elif message == 'join':
-                    groupNum = int(input("What group do you want to join? "))
-                    self.socket.send(b"%join\n", groupNum)
+                    self.socket.send(b"%join\n")
+                    print(self.socket.recv(1024).decode())
+                    break
+
+                elif message == 'joinP':
+                    groupNum = str(input("What group do you want to join? "))
+                    fullCommand = ("%join " + groupNum + "\n")
+                    self.socket.send(fullCommand.encode())
+                    print(fullCommand.encode())
                     print(self.socket.recv(1024).decode())
                     break
 
