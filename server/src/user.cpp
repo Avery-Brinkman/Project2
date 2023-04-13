@@ -120,7 +120,7 @@ void User::notifyMessage(int groupId, int messageId) {
                           message.postDate, message.subject));
 }
 
-int User::showLastMessages(int groupId) {
+void User::showLastMessages(int groupId) {
   // Make sure user belongs to the group before showing last messages
   if (!verifyGroup(groupId))
     return;

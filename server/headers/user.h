@@ -48,8 +48,8 @@ public:
   // Creates a message showing a new message has been posted to a group and sends it
   void notifyMessage(int groupId, int messageId);
 
-  // Creates a message showing the last messages sent (up to 2) and returns the number that was sent
-  int showLastMessages(int groupId);
+  // Creates a message showing the last messages sent (up to 2)
+  void showLastMessages(int groupId);
 
   bool selfQuit() const { return m_quit; }
 
