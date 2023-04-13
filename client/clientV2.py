@@ -36,7 +36,7 @@ class Client:
             print(" 'post' - Post a message in the public group ")
             print(" 'mesg' - Get a message from the public group ")
             print(" 'grps' - Get the list of groups available to join ")
-            print(" 'join <group_id>' - join a group ")
+            print(" 'joinP' - join a private group ")
             print(" 'exit <group_id>' - exit a group ")
             print(" 'usrs <group_id>' - Get the users in a group")
             print(" 'post <group_id>' - Post a message to a group")
@@ -56,9 +56,31 @@ class Client:
             elif message == 'join':
                 self.socket.send(b"%join\n")
                 print(self.socket.recv(1024).decode())
+                
+            elif message == 'join 1':
+                self.socket.send(b"%join 1\n")
+                print(self.socket.recv(1024).decode())
+
+            elif message == 'join 2':
+                self.socket.send(b"%join 2\n")
+                print(self.socket.recv(1024).decode())
+
+            elif message == 'join 3':
+                self.socket.send(b"%join 3\n")
+                print(self.socket.recv(1024).decode())
+
+            elif message == 'join 4':
+                self.socket.send(b"%join 4\n")
+                print(self.socket.recv(1024).decode())
+
+            elif message == 'join 5':
+                self.socket.send(b"%join 5\n")
+                print(self.socket.recv(1024).decode())  
+
             elif message == 'usrs':
                 self.socket.send(b"%usrs\n")
                 print(self.socket.recv(1024).decode())
+                
             elif message == 'post':
                 self.socket.send(b"%post\n")
                 subject = input("What's the message subject? ")
@@ -66,6 +88,7 @@ class Client:
                 contents = input("What's the message content? ")
                 self.socket.send(contents.encode("utf-8") + b"\n")
                 print(self.socket.recv(1024).decode())
+                
             elif message == 'mesg':
                 self.socket.send(b"%mesg\n")
                 mesg_id = input("What's the message id? ")
