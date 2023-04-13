@@ -26,6 +26,19 @@ class Client:
 
         # Send the username to the server to join the group
         self.socket.sendall(self.username.encode())
+        
+    def receive(self):
+        while True:
+            try:
+            # Receive Message From Server
+                message = self.socket.recv(1024).decode()
+                print(message)
+                break
+            except:
+            # Close Connection When Error
+                print("An error occured!")
+                self.socket.close()
+        
 
     def handle_connection(self):
         while True:
@@ -45,41 +58,43 @@ class Client:
 
             if message == 'quit':
                 self.socket.send(b"%quit\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
             elif message == 'exit':
                 self.socket.send(b"%exit\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
                 self.socket.close()
                 print("You have left the group.")
                 time.sleep(1)
                 exit()
             elif message == 'join':
                 self.socket.send(b"%join\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
 
             elif message == 'join 1':
                 self.socket.send(b"%join 1\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
 
             elif message == 'join 2':
                 self.socket.send(b"%join 2\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
+
 
             elif message == 'join 3':
                 self.socket.send(b"%join 3\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
+
 
             elif message == 'join 4':
                 self.socket.send(b"%join 4\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
 
             elif message == 'join 5':
                 self.socket.send(b"%join 5\n")
-                print(self.socket.recv(1024).decode())  
+                self.receive()
 
             elif message == 'usrs':
                 self.socket.send(b"%usrs\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
                 
             elif message == 'post':
                 self.socket.send(b"%post\n")
@@ -87,16 +102,16 @@ class Client:
                 self.socket.send(subject.encode("utf-8") + b"\n")
                 contents = input("What's the message content? ")
                 self.socket.send(contents.encode("utf-8") + b"\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
                 
             elif message == 'mesg':
                 self.socket.send(b"%mesg\n")
                 mesg_id = input("What's the message id? ")
                 self.socket.send(mesg_id.encode("utf-8") + b"\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
             elif message == 'grps':
                 self.socket.send(b"%grps\n")
-                print(self.socket.recv(1024).decode())
+                self.receive()
             else:
                 print("Invalid command. Please try again.")
 
@@ -106,6 +121,11 @@ def main():
     client = Client()
     client.connect_to_server()
     client.handle_connection()
+    # Start a separate thread to receive messages from the server
+    receive_thread = threading.Thread(target=receive)
+    receive_thread.start()
+
+
 
 
 if __name__ == '__main__':
