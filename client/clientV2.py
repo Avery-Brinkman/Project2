@@ -36,7 +36,7 @@ class Client:
             print(" 'post' - Post a message in the public group ")
             print(" 'mesg' - Get a message from the public group ")
             print(" 'grps' - Get the list of groups available to join ")
-            print(" 'joinP' - join a private group ")
+            print(" 'join <group_id>' - join a private group ")
             print(" 'exit <group_id>' - exit a group ")
             print(" 'usrs <group_id>' - Get the users in a group")
             print(" 'post <group_id>' - Post a message to a group")
@@ -56,7 +56,7 @@ class Client:
             elif message == 'join':
                 self.socket.send(b"%join\n")
                 print(self.socket.recv(1024).decode())
-                
+
             elif message == 'join 1':
                 self.socket.send(b"%join 1\n")
                 print(self.socket.recv(1024).decode())
