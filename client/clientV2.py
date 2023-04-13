@@ -26,19 +26,22 @@ class Client:
 
         # Send the username to the server to join the group
         self.socket.sendall(self.username.encode())
-        
+
+        # Start a separate thread to receive messages from the server
+        receive_thread = threading.Thread(target=self.receive)
+        receive_thread.start()
+
     def receive(self):
         while True:
             try:
-            # Receive Message From Server
+                # Receive Message From Server
                 message = self.socket.recv(1024).decode()
                 print(message)
-                break
             except:
-            # Close Connection When Error
+                # Close Connection When Error
                 print("An error occured!")
                 self.socket.close()
-        
+                break
 
     def handle_connection(self):
         while True:
@@ -58,60 +61,38 @@ class Client:
 
             if message == 'quit':
                 self.socket.send(b"%quit\n")
-                self.receive()
-            elif message == 'exit':
-                self.socket.send(b"%exit\n")
-                self.receive()
                 self.socket.close()
                 print("You have left the group.")
                 time.sleep(1)
                 exit()
-            elif message == 'join':
-                self.socket.send(b"%join\n")
-                self.receive()
+            elif message == 'exit':
+                self.socket.send(b"%exit\n")
+            # Check for join
+            elif message[:4] == 'join':
+                # Check if group is included
+                if message[5:]:
+                    # Check for valid number
+                    group_id = int(message[5:])
+                    if group_id < 0 or group_id > 5:
+                        print("Invalid group!")
+                        continue
 
-            elif message == 'join 1':
-                self.socket.send(b"%join 1\n")
-                self.receive()
-
-            elif message == 'join 2':
-                self.socket.send(b"%join 2\n")
-                self.receive()
-
-
-            elif message == 'join 3':
-                self.socket.send(b"%join 3\n")
-                self.receive()
-
-
-            elif message == 'join 4':
-                self.socket.send(b"%join 4\n")
-                self.receive()
-
-            elif message == 'join 5':
-                self.socket.send(b"%join 5\n")
-                self.receive()
-
+                # If all was successful, send command
+                self.socket.send(b"%" + message.encode() + b"\n")
             elif message == 'usrs':
                 self.socket.send(b"%usrs\n")
-                self.receive()
-                
             elif message == 'post':
                 self.socket.send(b"%post\n")
                 subject = input("What's the message subject? ")
                 self.socket.send(subject.encode("utf-8") + b"\n")
                 contents = input("What's the message content? ")
                 self.socket.send(contents.encode("utf-8") + b"\n")
-                self.receive()
-                
             elif message == 'mesg':
                 self.socket.send(b"%mesg\n")
                 mesg_id = input("What's the message id? ")
                 self.socket.send(mesg_id.encode("utf-8") + b"\n")
-                self.receive()
             elif message == 'grps':
                 self.socket.send(b"%grps\n")
-                self.receive()
             else:
                 print("Invalid command. Please try again.")
 
@@ -121,11 +102,6 @@ def main():
     client = Client()
     client.connect_to_server()
     client.handle_connection()
-    # Start a separate thread to receive messages from the server
-    receive_thread = threading.Thread(target=receive)
-    receive_thread.start()
-
-
 
 
 if __name__ == '__main__':
