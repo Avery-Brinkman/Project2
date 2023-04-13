@@ -1,0 +1,11 @@
+# Format Style Options - Created with Clang Power Tools
+---
+BasedOnStyle: LLVM
+BraceWrapping: 
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+PointerAlignment: Left
+...
