@@ -30,4 +30,12 @@ Message Group::getMessage(const int messageId) const {
   return m_messages.at(messageId);
 }
 
+std::vector<int> Group::getLastMessages(int n) const {
+  std::vector<int> ids;
+  for (auto iter = m_messages.end() - std::min((int)m_messages.size(), n); iter != m_messages.end();
+       iter++)
+    ids.push_back(iter->id);
+  return ids;
+}
+
 std::vector<std::string> Group::getUsers() const { return m_users; }

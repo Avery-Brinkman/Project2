@@ -29,8 +29,8 @@ public:
   // Gets the Message with the given id
   Message getMessage(const int messageId) const;
 
-  // Returns the last n messages
-  std::vector<Message> getLastMessages(int n) const;
+  // Returns the last n message ids
+  std::vector<int> getLastMessages(int n) const;
 
   // Gets the list of users in the group
   std::vector<std::string> getUsers() const;
