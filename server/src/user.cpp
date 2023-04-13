@@ -1,6 +1,7 @@
 #include <format>
 
 #include "user.h"
+#include <iostream>
 
 using namespace USER_NS;
 
@@ -58,15 +59,15 @@ void User::leaveGroup(int groupId) {
   sendMessage(std::format("Left group {}.\n", groupId));
 }
 
-void User::notifyJoin(const std::string_view userName, int groupId) const {
+void User::notifyJoin(const std::string_view userName, int groupId) {
   sendMessage(std::format("User {} has joined group {}\n", userName, groupId));
 }
 
-void User::notifyLeave(const std::string_view userName, int groupId) const {
+void User::notifyLeave(const std::string_view userName, int groupId) {
   sendMessage(std::format("User {} has left group {}\n", userName, groupId));
 }
 
-void User::showGroupMembers(int groupId) const {
+void User::showGroupMembers(int groupId) {
   // Make sure user belongs to the group before showing group members
   if (!verifyGroup(groupId))
     return;
@@ -83,8 +84,7 @@ void User::showGroupMembers(int groupId) const {
   sendMessage(memberListMsg);
 }
 
-int User::postMessage(int groupId, const std::string_view subject,
-                      const std::string_view content) const {
+int User::postMessage(int groupId, const std::string_view subject, const std::string_view content) {
   // Make sure user belongs to the group before showing group members
   if (!verifyGroup(groupId))
     return -1;
@@ -98,7 +98,7 @@ int User::postMessage(int groupId, const std::string_view subject,
   return msgId;
 }
 
-void User::getMessage(int groupId, int messageId) const {
+void User::getMessage(int groupId, int messageId) {
   // Make sure user belongs to the group before showing group members
   if (!verifyGroup(groupId))
     return;
@@ -113,7 +113,7 @@ void User::getMessage(int groupId, int messageId) const {
   sendMessage(message.message);
 }
 
-void User::notifyMessage(int groupId, int messageId) const {
+void User::notifyMessage(int groupId, int messageId) {
   // Get the new message
   auto message = m_groups.at(groupId)->getMessage(messageId);
 
@@ -122,7 +122,7 @@ void User::notifyMessage(int groupId, int messageId) const {
                           message.postDate, message.subject));
 }
 
-bool User::verifyGroup(int groupId) const {
+bool User::verifyGroup(int groupId) {
   if (!m_groups.contains(groupId)) {
     sendMessage(std::format("You must join group {} before performing that action!\n", groupId));
     return false;
@@ -130,13 +130,18 @@ bool User::verifyGroup(int groupId) const {
   return true;
 }
 
-void User::invalidCommand(const std::string_view badCommand) const {
+void User::invalidCommand(const std::string_view badCommand) {
   std::string notification = std::format("Invalid command sent: {}", badCommand);
   if (notification.back() != '\n')
     notification.append("\n");
   sendMessage(notification);
 }
 
-void User::sendMessage(const std::string_view message) const {
-  send(socket, message.data(), (int)message.length(), 0);
+void User::sendMessage(const std::string_view message) {
+  int res = send(socket, message.data(), (int)message.length(), 0);
+  if (res == SOCKET_ERROR) {
+    std::cout << "Failed to send message to " << name << ". Error: " << WSAGetLastError()
+              << std::endl;
+    closesocket(socket);
+  }
 }

@@ -29,37 +29,36 @@ public:
   void leaveGroup(int groupId);
 
   // Creates a message showing a user has joined a group and sends it
-  void notifyJoin(const std::string_view userName, int groupId) const;
+  void notifyJoin(const std::string_view userName, int groupId);
 
   // Creates a message showing a user has left a group and sends it
-  void notifyLeave(const std::string_view userName, int groupId) const;
+  void notifyLeave(const std::string_view userName, int groupId);
 
   // Creates a message showing the list of group members and sends it
-  void showGroupMembers(int groupId) const;
+  void showGroupMembers(int groupId);
 
   // Adds a message to a group, sending a success response and returning the message id
-  int postMessage(int groupId, const std::string_view subject,
-                  const std::string_view content) const;
+  int postMessage(int groupId, const std::string_view subject, const std::string_view content);
 
   // Gets the message with a given id from a given group and returns the contents
-  void getMessage(int groupId, int messageId) const;
+  void getMessage(int groupId, int messageId);
 
   // Creates a message showing a new message has been posted to a group and sends it
-  void notifyMessage(int groupId, int messageId) const;
+  void notifyMessage(int groupId, int messageId);
 
   // Creates a message showing the last messages sent (up to 2) and returns the number that was sent
-  int showLastMessages(int groupId) const;
+  int showLastMessages(int groupId);
 
   bool selfQuit() const { return m_quit; }
 
   // Returns whether user is in a given group and sends a message if not
-  bool verifyGroup(int groupId) const;
+  bool verifyGroup(int groupId);
 
   // Notifies the user that a bad command was sent
-  void invalidCommand(const std::string_view badCommand) const;
+  void invalidCommand(const std::string_view badCommand);
 
   // Sends a message to the user
-  void sendMessage(const std::string_view message) const;
+  void sendMessage(const std::string_view message);
 
   // Name of the user
   std::string name;
