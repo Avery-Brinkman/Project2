@@ -37,9 +37,11 @@ private:
 
   void addToQueue(const SOCKET& userSocket, std::queue<std::string>& queue);
 
+  void readHandler(std::shared_ptr<USER_NS::User> user);
+
   // Threaded function that handles the client connection. This is the main logic that runs a user
   // connection
-  void userHandler(std::shared_ptr<USER_NS::User> user, std::queue<std::string> commandQueue);
+  void userHandler(std::shared_ptr<USER_NS::User> user);
 
   // Takes the user's input and, logs it, and calls the relevant function
   void parser(std::shared_ptr<USER_NS::User> user, const std::string_view command);

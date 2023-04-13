@@ -5,6 +5,8 @@
 #include <WS2tcpip.h>
 #include <map>
 #include <memory>
+#include <queue>
+#include <semaphore>
 #include <string>
 #include <vector>
 
@@ -60,6 +62,10 @@ public:
   // Sends a message to the user
   void sendMessage(const std::string_view message);
 
+  std::string getNextCommand();
+
+  void addCommand(std::string_view command);
+
   // Name of the user
   std::string name;
 
@@ -72,5 +78,9 @@ private:
 
   // Tracks if user closed its own socket (for when future socket uses by server fail)
   bool m_quit = false;
+
+  std::counting_semaphore<5> m_commandSem = std::counting_semaphore<5>(0);
+
+  std::queue<std::string> m_commandQueue = {};
 };
 }; // namespace USER_NS

@@ -36,6 +36,21 @@ void Server::addToQueue(const SOCKET& userSocket, std::queue<std::string>& queue
     queue.push(currentCommand);
 }
 
+void Server::readHandler(std::shared_ptr<USER_NS::User> user) {
+  std::string currentCommand = "";
+  do {
+    std::string recvBuf = readSocket(user->socket);
+    std::stringstream readStream(recvBuf);
+    while (std::getline(readStream, currentCommand, '\n')) {
+      if (currentCommand == "ERROR" || currentCommand == "CLOSE") {
+        quit(user);
+        break;
+      }
+      user->addCommand(currentCommand);
+    }
+  } while (currentCommand != "ERROR" && currentCommand != "CLOSE");
+}
+
 void Server::addUser(const SOCKET& userSocket) {
   // Read the userName into a commandQueue
   std::queue<std::string> commandQueue;
@@ -61,7 +76,11 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket,
 
   // Create a new user, and hand it off to the thread function
   auto newUser = std::make_shared<USER_NS::User>(userName, userSocket);
-  std::jthread(&Server::userHandler, this, newUser, commandQueue).detach();
+  while (!commandQueue.empty()) {
+    newUser->addCommand(commandQueue.front());
+    commandQueue.pop();
+  }
+  std::jthread(&Server::userHandler, this, newUser).detach();
   // Track the new user
   m_users[userName.data()] = newUser;
   std::cout << "Added user: " << userName.data() << std::endl;
@@ -71,15 +90,12 @@ void Server::shutdown() {
   // For each thread, request a stop and remove it from the map
 }
 
-void Server::userHandler(std::shared_ptr<USER_NS::User> user,
-                         std::queue<std::string> commandQueue) {
+void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
   bool run = true;
+  std::jthread readThread(&Server::readHandler, this, user);
   // Receive until the user shuts down the connection or a stop is requested
   do {
-    if (commandQueue.empty())
-      addToQueue(user->socket, commandQueue);
-    std::string command = commandQueue.front();
-    commandQueue.pop();
+    std::string command = std::move(user->getNextCommand());
     // Close on error or if connection closed
     if (command == "ERROR" && !user->selfQuit()) {
       std::cout << "Could not read data from " << user->name << ", closing connection."
@@ -96,6 +112,7 @@ void Server::userHandler(std::shared_ptr<USER_NS::User> user,
 
   // Remove user
   quit(user);
+  readThread.join();
   return;
 }
 
@@ -179,7 +196,7 @@ void Server::listGroups(std::shared_ptr<USER_NS::User> user) const {
   // Add each group id and member count to out message
   for (int groupId = 0; groupId < m_groups.size(); groupId++)
     groupList.append(
-        std::format("Group {}: {} members", groupId, m_groups[groupId]->getUsers().size()));
+        std::format("Group {}: {} members, ", groupId, m_groups[groupId]->getUsers().size()));
 
   // Remove trailing space
   groupList.pop_back();
@@ -190,17 +207,11 @@ void Server::listGroups(std::shared_ptr<USER_NS::User> user) const {
 }
 
 void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
-  int res;
+  // Read subject
+  std::string subject = user->getNextCommand();
 
-  // Read subject into buffer, and create a string_view for it
-  char subjBuf[DEFAULT_BUFLEN] = {'\0'};
-  res = recv(user->socket, subjBuf, DEFAULT_BUFLEN, 0);
-  std::string_view subject(subjBuf, res);
-
-  // Read content into buffer, and create a string_view for it
-  char contBuf[DEFAULT_BUFLEN] = {'\0'};
-  res = recv(user->socket, contBuf, DEFAULT_BUFLEN, 0);
-  std::string_view content(contBuf, res);
+  // Read content
+  std::string_view content = user->getNextCommand();
 
   // Tell user to post the message and get the id for it
   int messageId = user->postMessage(groupId, subject, content);

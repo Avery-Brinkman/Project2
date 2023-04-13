@@ -42,8 +42,6 @@ void User::joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group) {
 
   // Send the list of other group member names
   showGroupMembers(groupId);
-
-  // NEED TO SHOW LAST 2 MESSAGES AS WELL
 }
 
 void User::leaveGroup(int groupId) {
@@ -122,6 +120,21 @@ void User::notifyMessage(int groupId, int messageId) {
                           message.postDate, message.subject));
 }
 
+int User::showLastMessages(int groupId) {
+  // Make sure user belongs to the group before showing last messages
+  if (!verifyGroup(groupId))
+    return;
+
+  // Get the ids of the last messages sent
+  auto lastMessages = m_groups.at(groupId)->getLastMessages(2);
+  // Send the number of messages about to be sent (so that client can make appropriate number of
+  // reads)
+  sendMessage(std::format("{}\n", lastMessages.size()));
+  // Send notification for each of the messages
+  for (auto id : lastMessages)
+    notifyMessage(groupId, id);
+}
+
 bool User::verifyGroup(int groupId) {
   if (!m_groups.contains(groupId)) {
     sendMessage(std::format("You must join group {} before performing that action!\n", groupId));
@@ -144,4 +157,16 @@ void User::sendMessage(const std::string_view message) {
               << std::endl;
     closesocket(socket);
   }
+}
+
+void User::addCommand(std::string_view command) {
+  m_commandQueue.push(command.data());
+  m_commandSem.release();
+}
+
+std::string User::getNextCommand() {
+  m_commandSem.acquire();
+  std::string command = std::move(m_commandQueue.front());
+  m_commandQueue.pop();
+  return command;
 }
