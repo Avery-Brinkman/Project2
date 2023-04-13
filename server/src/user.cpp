@@ -27,16 +27,17 @@ std::vector<int> User::joinedGroups() const {
 }
 
 void User::joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group) {
-  // Add to list of joined groups
-  m_groups[groupId] = group;
-  // Get users already in the group
-  auto existingUsers = group->getUsers();
-  // Tell group to add this user
-  group->addUser(name);
-
-  // Confirmation message
-  std::string returnMessage = std::format("Joined group {}!\n", groupId);
-  int res = send(socket, returnMessage.c_str(), (int)returnMessage.length(), 0);
+  // Notify if already joined, else add to group
+  if (m_groups.contains(groupId))
+    sendMessage(std::format("Already in group {}!\n", groupId));
+  else {
+    // Add to list of joined groups
+    m_groups[groupId] = group;
+    // Tell group to add this user
+    group->addUser(name);
+    // Confirmation message
+    sendMessage(std::format("Joined group {}!\n", groupId));
+  }
 
   // Send the list of other group member names
   showGroupMembers(groupId);
@@ -53,16 +54,16 @@ void User::leaveGroup(int groupId) {
   m_groups.at(groupId)->removeUser(name);
   // Remove group from list of joined groups
   m_groups.erase(groupId);
+  // Confirmation message
+  sendMessage(std::format("Left group {}.\n", groupId));
 }
 
 void User::notifyJoin(const std::string_view userName, int groupId) const {
-  std::string notification = std::format("User {} has joined group {}\n", userName, groupId);
-  int res = send(socket, notification.c_str(), (int)notification.length(), 0);
+  sendMessage(std::format("User {} has joined group {}\n", userName, groupId));
 }
 
 void User::notifyLeave(const std::string_view userName, int groupId) const {
-  std::string notification = std::format("User {} has left group {}\n", userName, groupId);
-  int res = send(socket, notification.c_str(), (int)notification.length(), 0);
+  sendMessage(std::format("User {} has left group {}\n", userName, groupId));
 }
 
 void User::showGroupMembers(int groupId) const {
@@ -70,16 +71,16 @@ void User::showGroupMembers(int groupId) const {
   if (!verifyGroup(groupId))
     return;
 
-  std::string returnMessage = std::format("Group {} members:", groupId);
+  std::string memberListMsg = std::format("Group {} members:", groupId);
 
   // Add each name to the output message
   for (auto const& user : m_groups.at(groupId)->getUsers())
-    returnMessage.append(" " + user + ",");
+    memberListMsg.append(" " + user + ",");
   // Replace trailing comma with \n
-  returnMessage.back() = '\n';
+  memberListMsg.back() = '\n';
 
-  // Send list of group members
-  int res = send(socket, returnMessage.c_str(), (int)returnMessage.length(), 0);
+  // Send the list of group members
+  sendMessage(memberListMsg);
 }
 
 int User::postMessage(int groupId, const std::string_view subject,
@@ -88,8 +89,13 @@ int User::postMessage(int groupId, const std::string_view subject,
   if (!verifyGroup(groupId))
     return -1;
 
-  // Return the id of the new message
-  return m_groups.at(groupId)->postMessage(name, subject, content);
+  // Get id of the new message
+  int msgId = m_groups.at(groupId)->postMessage(name, subject, content);
+  // Send success message
+  sendMessage(std::format("Message posted with id {}\n", msgId));
+
+  // Return message id
+  return msgId;
 }
 
 void User::getMessage(int groupId, int messageId) const {
@@ -97,39 +103,40 @@ void User::getMessage(int groupId, int messageId) const {
   if (!verifyGroup(groupId))
     return;
 
-  int res;
+  // Get the message
   auto message = m_groups.at(groupId)->getMessage(messageId);
+  // Send response
   if (message.id == -1) {
-
-    std::string returnMessage =
-        std::format("Group {} does not contain message {}!\n", groupId, messageId);
-    send(socket, returnMessage.c_str(), (int)returnMessage.length(), 0);
+    sendMessage(std::format("Group {} does not contain message {}!\n", groupId, messageId));
     return;
   }
-  res = send(socket, message.message.c_str(), (int)message.message.length(), 0);
+  sendMessage(message.message);
 }
 
 void User::notifyMessage(int groupId, int messageId) const {
+  // Get the new message
   auto message = m_groups.at(groupId)->getMessage(messageId);
 
-  std::string notification = std::format("{}\n{}\n{}\n{}\n{}\n", groupId, message.id,
-                                         message.userName, message.postDate, message.subject);
-  int res = send(socket, notification.c_str(), (int)notification.length(), 0);
+  // Send the info for the new message
+  sendMessage(std::format("{}\n{}\n{}\n{}\n{}\n", groupId, message.id, message.userName,
+                          message.postDate, message.subject));
 }
 
 bool User::verifyGroup(int groupId) const {
   if (!m_groups.contains(groupId)) {
-    std::string returnMessage =
-        std::format("You must join group {} before performing that action!\n", groupId);
-    send(socket, returnMessage.c_str(), (int)returnMessage.length(), 0);
+    sendMessage(std::format("You must join group {} before performing that action!\n", groupId));
     return false;
   }
   return true;
 }
 
 void User::invalidCommand(const std::string_view badCommand) const {
-  std::string notification = "Invalid command sent: " + std::string(badCommand);
+  std::string notification = std::format("Invalid command sent: {}", badCommand);
   if (notification.back() != '\n')
     notification.append("\n");
-  int res = send(socket, notification.c_str(), (int)notification.length(), 0);
+  sendMessage(notification);
+}
+
+void User::sendMessage(const std::string_view message) const {
+  send(socket, message.data(), (int)message.length(), 0);
 }

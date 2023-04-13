@@ -16,6 +16,7 @@ constexpr auto NUM_GROUPS = 5;
 namespace SERVER_NS {
 class Server {
 public:
+  // Server object reads from users sockets and coordinates server actions
   explicit Server(int privateGroupCount = NUM_GROUPS);
 
   // Creates a new user given a socket for new client connection
@@ -28,27 +29,39 @@ public:
   void shutdown();
 
 private:
-  // Threaded function that handles the client connection
+  // Threaded function that handles the client connection. This is the main logic that runs a user
+  // connection
   void userHandler(std::shared_ptr<USER_NS::User> user);
 
+  // Takes the user's input and, logs it, and calls the relevant function
   void parser(std::shared_ptr<USER_NS::User> user, const char* buffer);
 
+  // Removes the user from any joined group, tells user to close connection, and removes from list
+  // of users
   void quit(std::shared_ptr<USER_NS::User> user);
 
+  // Adds user to a group, notifying all other users that they joined
   void addToGroup(std::shared_ptr<USER_NS::User> user, int groupId);
 
+  // Removes user from a group, notifying all other users that they left
   void removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId);
 
+  // Has user send a list of members in a group
   void showGroupMembers(std::shared_ptr<USER_NS::User> user, int groupId) const;
 
+  // Creates a message with each available group and its member count
   void listGroups(std::shared_ptr<USER_NS::User> user) const;
 
+  // Reads message info, has user post it, notifying all other users
   void postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
 
+  // Reads message info and has user retrieve its contents
   void getMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
 
+  // Tells user to send invalid command message
   void invalidCommand(std::shared_ptr<USER_NS::User> user, const std::string_view badCommand) const;
 
+  // Logs the use of a command to the console
   void logCommand(const std::string_view userName, const std::string_view command,
                   int groupId = 0) const;
 
