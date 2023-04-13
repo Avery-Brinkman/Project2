@@ -1,0 +1,3 @@
+C:/Users/forev/Desktop/Project2/server/CMakeFiles/Project2_Server.dir
+C:/Users/forev/Desktop/Project2/server/CMakeFiles/ALL_BUILD.dir
+C:/Users/forev/Desktop/Project2/server/CMakeFiles/ZERO_CHECK.dir

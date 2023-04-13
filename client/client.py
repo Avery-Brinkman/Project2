@@ -56,31 +56,50 @@ class Client:
             if message == 'quit':
                 exit
             elif message == 'exit':
-                self.leave_group()
+                self.socket.send(b"%exit\n")
+                print(self.socket.recv(1024).decode())
+                self.socket.close()
+                print("You have left the group.")
+                time.sleep(1)
+                exit()
                 break
             elif message == 'join':
-                self.join_group()
+                self.socket.send(b"%join\n")
+                print(self.socket.recv(1024).decode())
                 break
             elif message == 'usrs':
-                self.receive_users()
+                self.socket.send(b"%usrs\n")
+                print(self.socket.recv(1024).decode())
                 break
             elif message == 'post':
-                self.send_message(message)
+                messageToPost = input("What message would you like to post? ")
+                self.socket.send(b"%mesg\n")
+                print(self.socket.recv(1024).decode())
                 break
             elif message == 'mesg':
-                self.receive_messages()
+                self.socket.send(b"%mesg\n")
+                print(self.socket.recv(1024).decode())
                 break
-
+            elif message == 'grps':
+                self.socket.send(b"%grps\n")
+                print(self.socket.recv(1024).decode())
+                
+                break
             else: 
                 print("Invalid command. Please try again.")
 
 
-    def send_message(self, message):
-            # Send the message to the server
-            self.socket.sendall(message.encode())
 
 
     def receive_messages(self):
+        # Continuously receive messages from the server
+        self.socket.send(b"%mesg\n")
+        print(self.socket.recv(1024).decode())
+        
+
+    def receive_groups(self):
+        self.socket.send(b"%grps\n")
+        print(self.socket.recv(1024).decode())
         # Continuously receive messages from the server
         while True:
             data = self.socket.recv(1024).decode()
@@ -89,7 +108,7 @@ class Client:
             else:
                 print("Disconnected from the server.")
                 break
-                
+
     def receive_users(self):
         # continuously receive users from server
         while True:
@@ -105,10 +124,7 @@ class Client:
         self.socket.sendall("%exit\n".encode())
 
         # Close the socket and terminate the client
-        self.socket.close()
-        print("You have left the group.")
-        time.sleep(1)
-        exit()
+        
 
 # Main function to run the client program
 def main():
