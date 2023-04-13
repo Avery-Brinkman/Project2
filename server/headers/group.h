@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -27,15 +28,17 @@ public:
                   const std::string_view content);
 
   // Gets the Message with the given id
-  Message getMessage(const int messageId) const;
+  Message getMessage(const int messageId);
 
   // Returns the last n message ids
-  std::vector<int> getLastMessages(int n) const;
+  std::vector<int> getLastMessages(int n);
 
   // Gets the list of users in the group
-  std::vector<std::string> getUsers() const;
+  std::vector<std::string> getUsers();
 
 private:
+  std::mutex m_mutex;
+
   // List of users
   std::vector<std::string> m_users = {};
 
