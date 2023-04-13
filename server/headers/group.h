@@ -9,6 +9,7 @@ namespace GROUP_NS {
     std::string userName;
     std::string subject;
     std::string message;
+    std::string postDate;
   };
 
   class Group {

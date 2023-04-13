@@ -1,3 +1,6 @@
+#include <chrono>
+#include <format>
+
 #include "group.h"
 
 using namespace GROUP_NS;
@@ -17,7 +20,7 @@ void Group::removeUser(const std::string_view userName) {
 
 int Group::postMessage(const std::string_view name, const std::string_view subject, const std::string_view content) {
   int msgId = (int)m_messages.size();
-  m_messages.emplace_back(msgId, name.data(), subject.data(), content.data());
+  m_messages.emplace_back(msgId, name.data(), subject.data(), content.data(), std::format("{0:%D %R}", std::chrono::utc_clock::from_sys(std::chrono::system_clock::now())));
   return msgId;
 }
 

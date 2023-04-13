@@ -107,7 +107,12 @@ void User::getMessage(int groupId, int messageId) const {
 void User::notifyMessage(int groupId, int messageId) const {
   auto message = m_groups.at(groupId)->getMessage(messageId);
 
-  std::string notification = std::to_string(groupId) + '\n' + std::to_string(message.id) + '\n' + message.userName + '\n' + message.subject + '\n';
+  std::string notification;
+  notification.append(std::to_string(groupId) + '\n');
+  notification.append(std::to_string(message.id) + '\n');
+  notification.append(message.userName + '\n');
+  notification.append(message.postDate + '\n');
+  notification.append(message.subject + '\n');
   int res = send(socket, notification.c_str(), notification.length(), 0);
 }
 
