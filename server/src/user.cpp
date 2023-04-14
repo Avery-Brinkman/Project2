@@ -108,7 +108,7 @@ void User::getMessage(int groupId, int messageId) {
     sendMessage(std::format("Group {} does not contain message {}!\n", groupId, messageId));
     return;
   }
-  sendMessage(message.message);
+  sendMessage(std::format("{}\n", message.message));
 }
 
 void User::notifyMessage(int groupId, int messageId) {

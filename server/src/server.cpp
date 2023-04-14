@@ -66,8 +66,10 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket,
   if (userName == "ERROR" || userName == "CLOSE")
     return;
   std::cout << "Attempting to add user: " << userName.data() << std::endl;
+  m_usrsMutex.lock();
   // Ensure user doesn't already exist
   if (m_users.contains(userName.data())) {
+    m_usrsMutex.unlock();
     std::string msg = std::format("User {} already exists!\n", userName);
     send(userSocket, msg.c_str(), msg.size(), 0);
     closesocket(userSocket);
@@ -83,6 +85,7 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket,
   std::jthread(&Server::userHandler, this, newUser).detach();
   // Track the new user
   m_users[userName.data()] = newUser;
+  m_usrsMutex.unlock();
   std::cout << "Added user: " << userName.data() << std::endl;
 }
 
@@ -157,15 +160,18 @@ void Server::quit(std::shared_ptr<USER_NS::User> user) {
   // Remove the user from each group that they joined
   for (auto groupId : user->joinedGroups())
     removeFromGroup(user, groupId);
+  m_usrsMutex.lock();
 
   // Close connection
   user->quit();
 
   // Stop tracking name
   m_users.erase(user->name);
+  m_usrsMutex.unlock();
 }
 
 void Server::addToGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
+  m_usrsMutex.lock();
   // Get users currently in the group to notify them later
   auto existingUsers = m_groups[groupId]->getUsers();
 
@@ -175,15 +181,18 @@ void Server::addToGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
   // Notify other users
   for (auto const& userName : existingUsers)
     m_users.at(userName)->notifyJoin(user->name, groupId);
+  m_usrsMutex.unlock();
 }
 
 void Server::removeFromGroup(std::shared_ptr<USER_NS::User> user, int groupId) {
+  m_usrsMutex.lock();
   // Tell user to leave group
   user->leaveGroup(groupId);
 
   // Notify other users
   for (auto const& userName : m_groups[groupId]->getUsers())
     m_users.at(userName)->notifyLeave(user->name, groupId);
+  m_usrsMutex.unlock();
 }
 
 void Server::showGroupMembers(std::shared_ptr<USER_NS::User> user, int groupId) const {
@@ -206,12 +215,12 @@ void Server::listGroups(std::shared_ptr<USER_NS::User> user) const {
   user->sendMessage(groupList);
 }
 
-void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
+void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) {
   // Read subject
   std::string subject = user->getNextCommand();
 
   // Read content
-  std::string_view content = user->getNextCommand();
+  std::string content = user->getNextCommand();
 
   // Tell user to post the message and get the id for it
   int messageId = user->postMessage(groupId, subject, content);
@@ -219,16 +228,16 @@ void Server::postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const
   if (messageId < 0)
     return;
 
+  m_usrsMutex.lock();
   // Notify the rest of the users
   for (auto const& userName : m_groups[groupId]->getUsers())
     m_users.at(userName)->notifyMessage(groupId, messageId);
+  m_usrsMutex.unlock();
 }
 
 void Server::getMessage(std::shared_ptr<USER_NS::User> user, int groupId) const {
   // Get messageId
-  char recvbuf[DEFAULT_BUFLEN] = {'\0'};
-  int res = recv(user->socket, recvbuf, DEFAULT_BUFLEN, 0);
-  int messageId = atoi(recvbuf);
+  int messageId = atoi(user->getNextCommand().c_str());
   // Have user get message with same id
   user->getMessage(groupId, messageId);
 }

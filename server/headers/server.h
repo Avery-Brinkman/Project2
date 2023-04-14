@@ -4,6 +4,7 @@
 
 #include <WS2tcpip.h>
 #include <map>
+#include <mutex>
 #include <queue>
 #include <string>
 #include <thread>
@@ -63,7 +64,7 @@ private:
   void listGroups(std::shared_ptr<USER_NS::User> user) const;
 
   // Reads message info, has user post it, notifying all other users
-  void postMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
+  void postMessage(std::shared_ptr<USER_NS::User> user, int groupId);
 
   // Reads message info and has user retrieve its contents
   void getMessage(std::shared_ptr<USER_NS::User> user, int groupId) const;
@@ -78,6 +79,8 @@ private:
   // The list of groups that run on the server. Indexed by Id, with 0 being the public (default)
   // group
   std::vector<std::shared_ptr<GROUP_NS::Group>> m_groups;
+
+  std::mutex m_usrsMutex;
 
   // Used to keep track of user objects by name
   std::map<std::string, std::shared_ptr<USER_NS::User>> m_users;
