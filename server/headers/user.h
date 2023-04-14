@@ -16,7 +16,7 @@ namespace USER_NS {
 class User {
 public:
   // Creates a user with a given name and existing socket
-  User(const std::string_view userName, const SOCKET& userSocket);
+  User(const SOCKET& userSocket);
 
   // Leaves any group they're still in and closes the socket
   void quit();
@@ -62,8 +62,10 @@ public:
   // Sends a message to the user
   void sendMessage(const std::string_view message);
 
+  // Gets the next command from the queue
   std::string getNextCommand();
 
+  // Adds a command to the queue
   void addCommand(std::string_view command);
 
   // Name of the user
@@ -79,8 +81,10 @@ private:
   // Tracks if user closed its own socket (for when future socket uses by server fail)
   bool m_quit = false;
 
+  // Prevents reads and pops on empty queue
   std::counting_semaphore<5> m_commandSem = std::counting_semaphore<5>(0);
 
+  // The queue of commands to run
   std::queue<std::string> m_commandQueue = {};
 };
 }; // namespace USER_NS

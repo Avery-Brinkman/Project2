@@ -22,22 +22,23 @@ public:
   // Server object reads from users sockets and coordinates server actions
   explicit Server(int privateGroupCount = NUM_GROUPS);
 
-  // Creates a new user given a socket for new client connection
+  // Creates a new user thread given a socket for new client connection
   void addUser(const SOCKET& userSocket);
-
-  // Starts a new thread to handle socket data, mapping it to the user it belongs to
-  void addUser(const std::string_view userName, const SOCKET& userSocket,
-               std::queue<std::string>& commandQueue);
 
   // Shuts down the server and all client connections
   void shutdown();
 
 private:
+  // Gets and sets user's name and starts tracking the user in the server
+  void addUserToServer(std::shared_ptr<USER_NS::User> user);
+
   // Reads characters from a socket up to and including \n, returning result
   std::string readSocket(const SOCKET& userSocket);
 
+  // Reads characters from a socket up to but not including \n, and adds it to the queue
   void addToQueue(const SOCKET& userSocket, std::queue<std::string>& queue);
 
+  // Constantly reads a user socket and adds the commands to the user command queue
   void readHandler(std::shared_ptr<USER_NS::User> user);
 
   // Threaded function that handles the client connection. This is the main logic that runs a user
@@ -80,6 +81,7 @@ private:
   // group
   std::vector<std::shared_ptr<GROUP_NS::Group>> m_groups;
 
+  // Mutex to protect access to the users map
   std::mutex m_usrsMutex;
 
   // Used to keep track of user objects by name

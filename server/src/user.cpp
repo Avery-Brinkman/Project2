@@ -5,8 +5,7 @@
 
 using namespace USER_NS;
 
-User::User(const std::string_view userName, const SOCKET& userSocket)
-    : name(userName.data(), userName.size()), socket(userSocket) {}
+User::User(const SOCKET& userSocket) : socket(userSocket) {}
 
 void User::quit() {
   // Extra cleanup if necessary

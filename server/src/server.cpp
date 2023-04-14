@@ -52,17 +52,23 @@ void Server::readHandler(std::shared_ptr<USER_NS::User> user) {
 }
 
 void Server::addUser(const SOCKET& userSocket) {
+  auto newUser = std::make_shared<USER_NS::User>(userSocket);
+  std::jthread(&Server::userHandler, this, newUser).detach();
+}
+
+void Server::shutdown() {
+  // For each thread, request a stop and remove it from the map
+}
+
+void Server::addUserToServer(std::shared_ptr<USER_NS::User> user) {
   // Read the userName into a commandQueue
   std::queue<std::string> commandQueue;
-  addToQueue(userSocket, commandQueue);
+  addToQueue(user->socket, commandQueue);
 
   std::string userName = commandQueue.front();
   commandQueue.pop();
-  addUser(userName, userSocket, commandQueue);
-}
+  user->name = userName;
 
-void Server::addUser(const std::string_view userName, const SOCKET& userSocket,
-                     std::queue<std::string>& commandQueue) {
   if (userName == "ERROR" || userName == "CLOSE")
     return;
   std::cout << "Attempting to add user: " << userName.data() << std::endl;
@@ -71,29 +77,24 @@ void Server::addUser(const std::string_view userName, const SOCKET& userSocket,
   if (m_users.contains(userName.data())) {
     m_usrsMutex.unlock();
     std::string msg = std::format("User {} already exists!\n", userName);
-    send(userSocket, msg.c_str(), msg.size(), 0);
-    closesocket(userSocket);
+    send(user->socket, msg.c_str(), msg.size(), 0);
+    closesocket(user->socket);
     return;
   }
 
-  // Create a new user, and hand it off to the thread function
-  auto newUser = std::make_shared<USER_NS::User>(userName, userSocket);
   while (!commandQueue.empty()) {
-    newUser->addCommand(commandQueue.front());
+    user->addCommand(commandQueue.front());
     commandQueue.pop();
   }
-  std::jthread(&Server::userHandler, this, newUser).detach();
   // Track the new user
-  m_users[userName.data()] = newUser;
+  m_users[userName.data()] = user;
   m_usrsMutex.unlock();
   std::cout << "Added user: " << userName.data() << std::endl;
 }
 
-void Server::shutdown() {
-  // For each thread, request a stop and remove it from the map
-}
-
 void Server::userHandler(std::shared_ptr<USER_NS::User> user) {
+  addUserToServer(user);
+
   bool run = true;
   std::jthread readThread(&Server::readHandler, this, user);
   // Receive until the user shuts down the connection or a stop is requested
