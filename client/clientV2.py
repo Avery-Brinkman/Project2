@@ -42,10 +42,9 @@ class Client:
                 print(message)
                 lock.release()
             except:
-                # Close Connection When Error
-                print("An error occured!")
+                # Close Connection 
+                print("Exiting program!")
                 self.socket.close()
-                lock.release()
                 break
 
     def handle_connection(self):
