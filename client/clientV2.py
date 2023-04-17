@@ -36,15 +36,16 @@ class Client:
     def receive(self):
         while True:
             try:
-                lock.acquire()
                 # Receive Message From Server
                 message = self.socket.recv(1024).decode()
+                lock.acquire()
                 print(message)
                 lock.release()
             except:
                 # Close Connection When Error
                 print("An error occured!")
                 self.socket.close()
+                lock.release()
                 break
 
     def handle_connection(self):
@@ -62,8 +63,8 @@ class Client:
             print(" 'usrs <group_id>' - Get the users in a group")
             print(" 'post <group_id>' - Post a message to a group")
             print(" 'get <group_id>' - Get a message from a group")
-            message = input("Enter a command: ")
             lock.release()
+            message = input("Enter a command: \n")
 
             if message == 'quit':
                 self.socket.send(b"%quit\n")
