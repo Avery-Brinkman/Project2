@@ -41,6 +41,9 @@ void User::joinGroup(int groupId, std::shared_ptr<GROUP_NS::Group> group) {
 
   // Send the list of other group member names
   showGroupMembers(groupId);
+
+  // Show the lasts messages sent
+  showLastMessages(groupId);
 }
 
 void User::leaveGroup(int groupId) {
@@ -128,7 +131,7 @@ void User::showLastMessages(int groupId) {
   auto lastMessages = m_groups.at(groupId)->getLastMessages(2);
   // Send the number of messages about to be sent (so that client can make appropriate number of
   // reads)
-  sendMessage(std::format("{}\n", lastMessages.size()));
+  sendMessage(std::format("LAST_MSGS {}\n", lastMessages.size()));
   // Send notification for each of the messages
   for (auto id : lastMessages)
     notifyMessage(groupId, id);
