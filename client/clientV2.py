@@ -38,8 +38,17 @@ class Client:
             try:
                 # Receive Message From Server
                 message = self.socket.recv(1024).decode()
+                
                 lock.acquire()
-                print(message)
+                splitMessage = str.split(message)
+                if len(splitMessage) > 4:
+                    for x in splitMessage:
+                        if x == 'LAST_MSGS':
+                            numMessages = splitMessage[x+1]
+                            for y in numMessages:
+                                print("Msg: " + splitMessage[x+2] + "From: " +splitMessage[x+3] + "Date: " + splitMessage[x+4] +"Subject: " + splitMessage[x+5])
+                else:
+                    print(message)
                 lock.release()
             except:
                 # Close Connection 
@@ -98,6 +107,7 @@ class Client:
 
                 # If all was successful, send command
                 self.socket.send(b"%" + message.encode() + b"\n")
+
 
             elif message[:4] == 'usrs':
                 # Check if valid group is included
