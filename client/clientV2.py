@@ -74,8 +74,17 @@ class Client:
                 print("You have left the group.")
                 time.sleep(1)
                 exit()
-            elif message == 'exit':
-                self.socket.send(b"%exit\n")
+            elif message[:4] == 'exit':
+                # Check if group is included
+                if message[5:]:
+                    # Check for valid number
+                    group_id = int(message[5:])
+                    if group_id < 0 or group_id > 5:
+                        print("Invalid group!")
+                        continue
+
+                # If all was successful, send command
+                self.socket.send(b"%" + message.encode() + b"\n")
             # Check for join
             elif message[:4] == 'join':
                 # Check if group is included
