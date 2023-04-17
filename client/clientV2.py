@@ -63,7 +63,7 @@ class Client:
             print(" 'exit <group_id>' - exit a group ")
             print(" 'usrs <group_id>' - Get the users in a group")
             print(" 'post <group_id>' - Post a message to a group")
-            print(" 'get <group_id>' - Get a message from a group")
+            print(" 'mesg <group_id>' - Get a message from a group")
             lock.release()
 
             message = input("Enter a command: \n")
@@ -97,18 +97,34 @@ class Client:
                         print("Invalid group!")
                         continue
                 self.socket.send(b"%" + message.encode() + b"\n")
-            elif message == 'post':
-                self.socket.send(b"%post\n")
+            elif message[:4] == 'post':
+
+                if message[5:]:
+                    # Check for valid number
+                    group_id = int(message[5:])
+                    if group_id < 0 or group_id > 5:
+                        print("Invalid group!")
+                        continue
+                self.socket.send(b"%" + message.encode() + b"\n")
+                
                 subject = input("What's the message subject? ")
                 self.socket.send(subject.encode("utf-8") + b"\n")
                 contents = input("What's the message content? ")
                 self.socket.send(contents.encode("utf-8") + b"\n")
-            elif message == 'mesg':
-                self.socket.send(b"%mesg\n")
+            elif message[:4] == 'mesg':
+                if message[5:]:
+                    # Check for valid number
+                    group_id = int(message[5:])
+                    if group_id < 0 or group_id > 5:
+                        print("Invalid group!")
+                        continue
+                self.socket.send(b"%" + message.encode() + b"\n")
+
                 mesg_id = input("What's the message id? ")
                 self.socket.send(mesg_id.encode("utf-8") + b"\n")
             elif message == 'grps':
                 self.socket.send(b"%grps\n")
+
             else:
                 print("Invalid command. Please try again.")
     
