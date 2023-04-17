@@ -80,7 +80,14 @@ class Client:
                 # If all was successful, send command
                 self.socket.send(b"%" + message.encode() + b"\n")
             elif message == 'usrs':
-                self.socket.send(b"%usrs\n")
+                 # Check if group is included
+                if message[5:]:
+                    # Check for valid number
+                    group_id = int(message[5:])
+                    if group_id < 0 or group_id > 5:
+                        print("Invalid group!")
+                        continue
+                self.socket.send(b"%" + message.encode() + b"\n")
             elif message == 'post':
                 self.socket.send(b"%post\n")
                 subject = input("What's the message subject? ")
