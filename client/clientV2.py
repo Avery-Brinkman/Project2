@@ -47,6 +47,13 @@ class Client:
                 self.socket.close()
                 break
 
+    def valid_group(self, message):
+        if not message[5:]:
+            return True
+        # Check for valid number
+        group_id = int(message[5:])
+        return (group_id >= 0 and group_id <= 5)
+
     def handle_connection(self):
         while True:
             time.sleep(1)
@@ -73,69 +80,62 @@ class Client:
                 print("You have left the group.")
                 time.sleep(1)
                 exit()
-            elif message[:4] == 'exit':
-                # Check if group is included
-                if message[5:]:
-                    # Check for valid number
-                    group_id = int(message[5:])
-                    if group_id < 0 or group_id > 5:
-                        print("Invalid group!")
-                        continue
 
-                # If all was successful, send command
+            elif message[:4] == 'exit':
+                # Check if valid group is included
+                if not self.valid_group(message):
+                    print("Invalid group!")
+                    continue
+
                 self.socket.send(b"%" + message.encode() + b"\n")
+
             # Check for join
             elif message[:4] == 'join':
-                # Check if group is included
-                if message[5:]:
-                    # Check for valid number
-                    group_id = int(message[5:])
-                    if group_id < 0 or group_id > 5:
-                        print("Invalid group!")
-                        continue
+                # Check if valid group is included
+                if not self.valid_group(message):
+                    print("Invalid group!")
+                    continue
 
                 # If all was successful, send command
                 self.socket.send(b"%" + message.encode() + b"\n")
-            elif message[:4] == 'usrs':
-                 # Check if group is included
-                if message[5:]:
-                    # Check for valid number
-                    group_id = int(message[5:])
-                    if group_id < 0 or group_id > 5:
-                        print("Invalid group!")
-                        continue
-                self.socket.send(b"%" + message.encode() + b"\n")
-            elif message[:4] == 'post':
 
-                if message[5:]:
-                    # Check for valid number
-                    group_id = int(message[5:])
-                    if group_id < 0 or group_id > 5:
-                        print("Invalid group!")
-                        continue
+            elif message[:4] == 'usrs':
+                # Check if valid group is included
+                if not self.valid_group(message):
+                    print("Invalid group!")
+                    continue
+
                 self.socket.send(b"%" + message.encode() + b"\n")
-                
+
+            elif message[:4] == 'post':
+                # Check if valid group is included
+                if not self.valid_group(message):
+                    print("Invalid group!")
+                    continue
+
+                self.socket.send(b"%" + message.encode() + b"\n")
+
                 subject = input("What's the message subject? ")
                 self.socket.send(subject.encode("utf-8") + b"\n")
                 contents = input("What's the message content? ")
                 self.socket.send(contents.encode("utf-8") + b"\n")
+
             elif message[:4] == 'mesg':
-                if message[5:]:
-                    # Check for valid number
-                    group_id = int(message[5:])
-                    if group_id < 0 or group_id > 5:
-                        print("Invalid group!")
-                        continue
+                # Check if valid group is included
+                if not self.valid_group(message):
+                    print("Invalid group!")
+                    continue
+
                 self.socket.send(b"%" + message.encode() + b"\n")
 
                 mesg_id = input("What's the message id? ")
                 self.socket.send(mesg_id.encode("utf-8") + b"\n")
+
             elif message == 'grps':
                 self.socket.send(b"%grps\n")
 
             else:
                 print("Invalid command. Please try again.")
-    
 
 
 # Main function to run the client program
