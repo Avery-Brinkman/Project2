@@ -79,7 +79,7 @@ class Client:
 
                 # If all was successful, send command
                 self.socket.send(b"%" + message.encode() + b"\n")
-            elif message == 'usrs':
+            elif message[:4] == 'usrs':
                  # Check if group is included
                 if message[5:]:
                     # Check for valid number
