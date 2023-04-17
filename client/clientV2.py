@@ -50,7 +50,7 @@ class Client:
 
     def handle_connection(self):
         while True:
-            time.sleep(2)
+            time.sleep(1)
             lock.acquire()
             print(" 'quit' - disconnect from server")
             print(" 'join' - join the public group")
