@@ -50,6 +50,7 @@ class Client:
 
     def handle_connection(self):
         while True:
+            time.sleep(2)
             lock.acquire()
             print(" 'quit' - disconnect from server")
             print(" 'join' - join the public group")
@@ -64,6 +65,7 @@ class Client:
             print(" 'post <group_id>' - Post a message to a group")
             print(" 'get <group_id>' - Get a message from a group")
             lock.release()
+
             message = input("Enter a command: \n")
 
             if message == 'quit':
@@ -109,6 +111,7 @@ class Client:
                 self.socket.send(b"%grps\n")
             else:
                 print("Invalid command. Please try again.")
+    
 
 
 # Main function to run the client program
