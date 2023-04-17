@@ -6,6 +6,7 @@ import time
 
 ipAddr = "127.0.0.1"  # localhost
 port = 5000
+lock = threading.Lock()
 
 
 class Client:
@@ -17,7 +18,7 @@ class Client:
         # Connect to the server
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((ipAddr, port))
-
+        lock.acquire()
         # Prompt the user to enter a username
         self.username = input("Enter a username to join the server: ")
         while not self.username:
@@ -26,6 +27,7 @@ class Client:
 
         # Send the username to the server to join the group
         self.socket.sendall(self.username.encode())
+        lock.release()
 
         # Start a separate thread to receive messages from the server
         receive_thread = threading.Thread(target=self.receive)
@@ -34,9 +36,11 @@ class Client:
     def receive(self):
         while True:
             try:
+                lock.acquire()
                 # Receive Message From Server
                 message = self.socket.recv(1024).decode()
                 print(message)
+                lock.release()
             except:
                 # Close Connection When Error
                 print("An error occured!")
@@ -45,6 +49,7 @@ class Client:
 
     def handle_connection(self):
         while True:
+            lock.acquire()
             print(" 'quit' - disconnect from server")
             print(" 'join' - join the public group")
             print(" 'exit' - leave the public group ")
@@ -58,6 +63,7 @@ class Client:
             print(" 'post <group_id>' - Post a message to a group")
             print(" 'get <group_id>' - Get a message from a group")
             message = input("Enter a command: ")
+            lock.release()
 
             if message == 'quit':
                 self.socket.send(b"%quit\n")
@@ -106,6 +112,7 @@ class Client:
 
 # Main function to run the client program
 def main():
+
     client = Client()
     client.connect_to_server()
     client.handle_connection()
