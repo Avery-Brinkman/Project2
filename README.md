@@ -1,4 +1,4 @@
-# Project2
+# Project2 - Avery Brinkman & Rylee Charlton
 
 ## Commands
 ### Set username
