@@ -38,20 +38,26 @@ class Client:
             try:
                 # Receive Message From Server
                 message = self.socket.recv(1024).decode()
-                
+
                 lock.acquire()
-                splitMessage = str.split(message)
-                if len(splitMessage) > 4:
-                    for x in splitMessage:
-                        if x == 'LAST_MSGS':
-                            numMessages = splitMessage[x+1]
-                            for y in numMessages:
-                                print("Msg: " + splitMessage[x+2] + "From: " +splitMessage[x+3] + "Date: " + splitMessage[x+4] +"Subject: " + splitMessage[x+5])
-                else:
-                    print(message)
+                split_message = str.split(message, "\n")
+                skip_until = 0
+                for index, individual_msg in enumerate(split_message):
+                    if index < skip_until:
+                        continue
+
+                    if individual_msg[:9] == 'NEW_MSGS ':
+                        num_messages = int(individual_msg[9:])
+                        for data_field in range(num_messages):
+                            print(
+                                f'Group: {split_message[index + 1 + (5 * data_field)]} | Msg: {split_message[index + 2 + (5 * data_field)]} | From: {split_message[index + 3 + (5 * data_field)]} | Date: {split_message[index + 4 + (5 * data_field)]} | Subject: {split_message[index + 5 + (5 * data_field)]}')
+                        skip_until = (5 * num_messages) + index + 1
+                    elif individual_msg:
+                        print(individual_msg)
                 lock.release()
-            except:
-                # Close Connection 
+            except Exception as e:
+                print(f'ERROR: {e}')
+                # Close Connection
                 print("Exiting program!")
                 self.socket.close()
                 break
@@ -107,7 +113,6 @@ class Client:
 
                 # If all was successful, send command
                 self.socket.send(b"%" + message.encode() + b"\n")
-
 
             elif message[:4] == 'usrs':
                 # Check if valid group is included

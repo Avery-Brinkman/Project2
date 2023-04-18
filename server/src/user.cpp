@@ -118,7 +118,7 @@ void User::notifyMessage(int groupId, int messageId) {
   auto message = m_groups.at(groupId)->getMessage(messageId);
 
   // Send the info for the new message
-  sendMessage(std::format("{}\n{}\n{}\n{}\n{}\n", groupId, message.id, message.userName,
+  sendMessage(std::format("NEW_MSGS 1\n{}\n{}\n{}\n{}\n{}\n", groupId, message.id, message.userName,
                           message.postDate, message.subject));
 }
 
@@ -131,10 +131,17 @@ void User::showLastMessages(int groupId) {
   auto lastMessages = m_groups.at(groupId)->getLastMessages(2);
   // Send the number of messages about to be sent (so that client can make appropriate number of
   // reads)
-  sendMessage(std::format("LAST_MSGS {}\n", lastMessages.size()));
+  std::string notification = std::format("NEW_MSGS {}\n", lastMessages.size());
   // Send notification for each of the messages
-  for (auto id : lastMessages)
-    notifyMessage(groupId, id);
+  for (auto id : lastMessages) {
+    // Get the new message
+    auto message = m_groups.at(groupId)->getMessage(id);
+
+    // Send the info for the new message
+    notification += std::format("{}\n{}\n{}\n{}\n{}\n", groupId, message.id, message.userName,
+                                message.postDate, message.subject);
+  }
+  sendMessage(notification);
 }
 
 bool User::verifyGroup(int groupId) {
