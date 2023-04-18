@@ -1,14 +1,14 @@
 # Project2 Server
 
-## Requirements
+# Requirements
 - C++20
 - Windows
-- CMake
-- Visual Studio (MSVC)
+- [CMake](https://cmake.org/)
+- [Visual Studio 2022 (MSVC 17)](https://visualstudio.microsoft.com/#vs-section)
 
     Be sure that the project is set to compile using C++20 features. This can be set by opening the `Build/Project2_Server.sln` in Visual Studio, going to `Project>Project2_Server Properties>Configuration Properties>General>C++ Language Standard` and setting it to `ISO C++20 Standard (/std:c++20)`
 
-## Build
+# Build
 Run  the following:
 ```
 mkdir Build
